@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Glyphbound: Neon Anthem</title>
+  <meta name="description" content="Building the Glyphbound universe — a cyberpunk x K-Pop inspired IP led by the virtual group N-X. Play the Glyphlink Protocol demo and meet Aelia, Nocta, Vyra, and IONA." />
+  <meta name="theme-color" content="#0A0A1A" />
+
+  <!-- Fonts & Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            bgdark: '#0A0A1A',
+            neon: { blue: '#00F0FF', magenta: '#FF00E6', gold: '#FFD700' },
+            panel: '#1A0A2E'
+          },
+          boxShadow: { neon: '0 0 15px rgba(0,240,255,.4)' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background-color: #0A0A1A; }
+    .neon-text { text-shadow: 0 0 10px #00F0FF; }
+    .btn-cta { background: linear-gradient(90deg,#FF00E6,#00F0FF); box-shadow: 0 0 12px #FF00E6; }
+    dialog::backdrop{background: radial-gradient(circle at 50% 40%, rgba(0,240,255,.20), rgba(0,0,0,.85) 70%); backdrop-filter: blur(6px);}
+  </style>
+</head>
+<body class="min-h-screen text-white font-sans antialiased">
+  <header class="sticky top-0 bg-bgdark/80 backdrop-blur z-50">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center p-4 gap-3 text-center sm:text-left">
+      <div class="flex flex-col items-center sm:items-start">
+        <div class="flex items-center gap-3">
+          <img src="./game/assets/LogoSyncStudios.png" alt="Logo" class="h-20 w-auto" />
+          <span class="text-xl font-extrabold tracking-wide">Sync-Dive Studios AG</span>
+        </div>
+        <span class="text-sm text-gray-300 italic mt-1">Dream. Dive. Disrupt.</span>
+      </div>
+      <nav class="flex gap-6 text-sm mt-3 sm:mt-0 items-center">
+        <a href="#protocol" class="hover:text-neon-blue">Protocol</a>
+        <a href="#nx" class="hover:text-neon-blue">N-X</a>
+        <a href="#roadmap" class="hover:text-neon-blue">Roadmap</a>
+        <a href="#contact" class="hover:text-neon-blue">Contact</a>
+        <button id="openPrereg" class="btn-cta text-black font-bold uppercase px-3 py-2 rounded-full">Pre-register</button>
+      </nav>
+    </div>
+  </header>
+
+  <section id="protocol" class="text-center py-20">
+    <h1 class="text-6xl font-extrabold">
+      <span class="block text-gray-300">Enter the</span>
+      <span class="block text-neon-blue neon-text">GLYPHBOUND</span>
+      <span class="block text-4xl">Universe</span>
+    </h1>
+    <p class="mt-4 max-w-2xl mx-auto text-gray-300">Ancient evils are getting stronger. Neo-Seoul is in danger. Only you can help N-X save Neo-Seoul.</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-4">
+      <button id="playDemo" class="btn-cta px-8 py-3 rounded-full text-black font-bold uppercase">Play Demo</button>
+      <a href="#nx" class="border border-white/40 px-8 py-3 rounded-full font-bold uppercase hover:border-neon-blue/70">Meet N-X</a>
+    </div>
+
+    <!-- Demo Modal -->
+    <dialog id="demoModal" class="rounded-xl overflow-hidden border border-neon-blue/40 w-[min(96vw,1100px)]">
+      <div class="bg-bgdark">
+        <div class="flex justify-between items-center p-3 border-b border-white/10">
+          <p class="font-semibold text-neon-blue">GLYPHLINK PROTOCOL — DEMO</p>
+          <button id="closeDemo" class="border border-white/30 px-3 py-1 rounded-md hover:border-neon-blue/70">Close</button>
+        </div>
+        <iframe src="./game/game_fixed.html" class="w-full aspect-[9/16] md:aspect-[16/9]" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>
+      </div>
+    </dialog>
+  </section>
+
+  <section id="nx" class="bg-panel py-20">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <h2 class="text-5xl font-extrabold mb-6">Meet <span class="text-neon-magenta">N-X</span></h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div><img src="./game/assets/aelia_Wink.png" alt="Aelia" class="mx-auto h-56 object-contain" /><h3 class="mt-3 text-xl text-neon-gold font-bold">Aelia</h3></div>
+        <div><img src="./game/assets/nocta_wink.png" alt="Nocta" class="mx-auto h-56 object-contain" /><h3 class="mt-3 text-xl text-cyan-300 font-bold">Nocta</h3></div>
+        <div><img src="./game/assets/vyra_wink.png" alt="Vyra" class="mx-auto h-56 object-contain" /><h3 class="mt-3 text-xl text-fuchsia-400 font-bold">Vyra</h3></div>
+        <div><img src="./game/assets/iona_wink.png" alt="IONA" class="mx-auto h-56 object-contain" /><h3 class="mt-3 text-xl text-sky-400 font-bold">IONA</h3></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="roadmap" class="py-20 bg-panel/40">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <h2 class="text-4xl font-extrabold mb-6 uppercase">Launch Protocol</h2>
+      <ol class="space-y-10 max-w-3xl mx-auto text-left">
+        <li>
+          <h3 class="text-2xl font-bold text-neon-blue">Phase 1 — Glyphlink Protocol (M0–3)</h3>
+          <p class="text-gray-300">Soft-launch puzzle experience introducing the Glyphbound universe.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-emerald-400">Phase 2 — Vyra: Grid Run (M3–6)</h3>
+          <p class="text-gray-300">An adrenaline-fueled runner game following Vyra through the neon streets of Neo-Seoul.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-fuchsia-400">Phase 3 — Glyphs of Harmony (M6–10)</h3>
+          <p class="text-gray-300">A serene puzzle experience uniting the essence of balance and music in the Glyphbound world.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-sky-400">Phase 4 — N-X: Off Stage (M10–14)</h3>
+          <p class="text-gray-300">A visual novel revealing the personal stories of the N-X members beyond the spotlight.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-purple-400">Phase 5 — IONA’s Circuit Dive (M14–20)</h3>
+          <p class="text-gray-300">An arcade shooter experience diving deep into IONA’s virtual world of rhythm and danger.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-yellow-400">Phase 6 — N-X Stage Rush (M20–24)</h3>
+          <p class="text-gray-300">A rhythm-based adventure expanding the N-X mythos and music-fueled world.</p>
+        </li>
+        <li>
+          <h3 class="text-2xl font-bold text-neon-gold">Phase 7 — Glyphbound: Neon Anthem (M24–30)</h3>
+          <p class="text-gray-300">The centerpiece of the Glyphbound universe, uniting all experiences into one grand narrative.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="contact" class="py-20 bg-bgdark text-center">
+    <h2 class="text-3xl font-bold mb-4">Get Development Updates</h2>
+    <form onsubmit="event.preventDefault(); this.reset(); document.getElementById('subscribed').hidden=false;" class="flex flex-col sm:flex-row justify-center gap-3">
+      <input id="email" type="email" required placeholder="you@neo-seoul.city" class="w-full sm:w-96 rounded-full border border-white/20 bg-white/5 px-5 py-3" />
+      <button class="btn-cta rounded-full px-6 py-3 text-black font-bold uppercase">Subscribe</button>
+    </form>
+    <p id="subscribed" class="mt-3 text-neon-blue hidden">Thanks! We'll be in touch soon.</p>
+  </section>
+
+  <!-- Pre-registration Modal -->
+  <dialog id="preregModal" class="w-[min(94vw,560px)] rounded-xl border border-neon-blue/40 overflow-hidden">
+    <div class="bg-bgdark">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <p class="font-semibold tracking-widest text-neon-blue uppercase">Pre-register for Updates</p>
+        <button id="closePrereg" class="rounded-md px-3 py-1 border border-white/30 hover:border-neon-blue/60">Close</button>
+      </div>
+      <form id="preregForm" class="p-5 flex flex-col gap-3" onsubmit="event.preventDefault(); preregThanks();">
+        <label class="text-sm text-gray-300" for="preregEmail">Email</label>
+        <input id="preregEmail" type="email" required inputmode="email" autocomplete="email" placeholder="you@neo-seoul.city" class="rounded-lg border border-white/20 bg-white/5 px-4 py-3 outline-none placeholder:text-white/40 focus:border-neon-blue/60" />
+        <label class="text-sm text-gray-300" for="preregRegion">Country / Region (optional)</label>
+        <input id="preregRegion" type="text" placeholder="Switzerland" class="rounded-lg border border-white/20 bg-white/5 px-4 py-3 outline-none placeholder:text-white/40 focus:border-neon-blue/60" />
+        <label class="inline-flex items-center gap-2 text-sm text-gray-300 mt-1">
+          <input id="preregConsent" type="checkbox" required />
+          <span>I agree to receive emails about development updates and launches.</span>
+        </label>
+        <button class="btn-cta mt-2 rounded-full px-6 py-3 font-bold uppercase text-black">Pre-register</button>
+        <p id="preregMsg" class="hidden text-neon-blue/90 text-sm">Thanks! You're on the list.</p>
+      </form>
+    </div>
+  </dialog>
+
+  <footer class="py-6 text-center text-white/60 bg-panel/40">
+    © <span id="y"></span>
+  </footer>
+
+  <script>
+    // Demo modal
+    const demoModal = document.getElementById('demoModal');
+    document.getElementById('playDemo').addEventListener('click',()=>demoModal.showModal());
+    document.getElementById('closeDemo').addEventListener('click',()=>demoModal.close());
+
+    // Pre-reg modal
+    const preregModal = document.getElementById('preregModal');
+    const preregMsg = document.getElementById('preregMsg');
+    const openPreregBtn = document.getElementById('openPrereg');
+    const closePreregBtn = document.getElementById('closePrereg');
+
+    function preregThanks(){
+      preregMsg.classList.remove('hidden');
+      try {
+        localStorage.setItem('preregDismissed','1');
+      } catch(e) {}
+      setTimeout(()=>preregModal.close(), 900);
+    }
+
+    openPreregBtn.addEventListener('click', ()=> preregModal.showModal());
+    closePreregBtn.addEventListener('click', ()=> preregModal.close());
+
+    // Auto-open once per browser if not dismissed
+    try {
+      const seen = localStorage.getItem('preregDismissed');
+      if(!seen){
+        setTimeout(()=>{ if(!preregModal.open) preregModal.showModal(); }, 2500);
+      }
+    } catch(e) {}
+
+    // Footer year
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
