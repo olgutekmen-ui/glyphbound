@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Mission Map · Glyphlink Protocol</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap");
+
+    body {
+      font-family: "Orbitron", sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, #0f0f1a 60%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem 1rem 5rem;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .bg-glow {
+      position: absolute;
+      width: 70vmax; height: 70vmax;
+      top: 10%; left: 50%; transform: translateX(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle,
+        rgba(0,255,255,0.14) 0%,
+        rgba(255,0,255,0.07) 40%,
+        rgba(0,0,0,0) 70%);
+      filter: blur(50px);
+      animation: pulseGlow 3s ease-in-out infinite alternate;
+      pointer-events: none; z-index: 0;
+    }
+    @keyframes pulseGlow {
+      0%   { opacity: 0.5; transform: translateX(-50%) scale(1); }
+      100% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+    }
+
+    .title-block { text-align: center; position: relative; z-index: 2; margin-bottom: 1rem; }
+    .map-title {
+      color: #00ffff; font-weight: 800; font-size: 1rem; line-height: 1rem; letter-spacing: 0.12em;
+      text-shadow: 0 0 8px #00ffff,0 0 16px rgba(0,255,255,0.6);
+    }
+    .map-sub {
+      color: #ffd700; font-size: 0.7rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.1em;
+      text-shadow: 0 0 6px #ffd700; margin-top: 0.4rem;
+    }
+
+    .map-path-wrapper {
+      position: relative; flex: 1; max-width: 480px; width: 100%; margin: 0 auto; z-index: 2;
+      overflow-y: auto; padding-bottom: 4rem;
+    }
+
+    .map-path-line {
+      position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%);
+      background: linear-gradient(to bottom,
+        rgba(0,255,255,0.8) 0%,
+        rgba(255,0,255,0.5) 50%,
+        rgba(0,255,255,0.15) 100%);
+      box-shadow: 0 0 10px rgba(0,255,255,0.7), 0 0 30px rgba(255,0,255,0.5);
+      border-radius: 999px; opacity: 0.4;
+    }
+
+    .level-node {
+      position: relative; background: rgba(15,15,26,0.6);
+      border: 2px solid #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.6),0 0 30px rgba(255,0,255,0.4);
+      border-radius: 0.75rem; padding: 0.75rem 1rem; width: calc(100% - 3rem);
+      max-width: 360px; margin: 1.25rem auto; display: flex; flex-direction: column;
+      align-items: flex-start; color: #fff; text-align: left; cursor: pointer; transition: all 0.15s;
+    }
+    .level-node.locked {
+      filter: grayscale(100%) brightness(0.5);
+      border-color: rgba(128,128,128,0.4); box-shadow: 0 0 6px rgba(128,128,128,0.3);
+      cursor: not-allowed;
+    }
+    .level-node:hover:not(.locked) {
+      box-shadow: 0 0 14px rgba(0,255,255,0.8), 0 0 32px rgba(255,0,255,0.6);
+      transform: scale(1.02);
+    }
+
+    .level-dot {
+      position: absolute; left: 50%; top: 0; transform: translate(-50%, -1rem);
+      width: 1rem; height: 1rem; border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #00ffff 40%, rgba(0,0,0,0) 70%);
+      border: 2px solid #fff; box-shadow: 0 0 8px #00ffff, 0 0 20px rgba(0,255,255,0.7), 0 0 36px rgba(255,0,255,0.5);
+    }
+
+    .level-header { display: flex; width: 100%; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+    .level-left { display: flex; flex-direction: column; }
+    .level-id {
+      color: #00ffff; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-shadow: 0 0 6px #00ffff;
+    }
+    .level-name {
+      color: #fff; font-size: 0.8rem; line-height: 1rem; font-weight: 700; margin-top: 0.25rem;
+      text-shadow: 0 0 6px rgba(255,255,255,0.5);
+    }
+    .level-stats {
+      font-size: 0.6rem; line-height: 0.8rem; text-align: right; min-width: 6rem; font-weight: 600;
+      color: #ffd700; text-shadow: 0 0 6px #ffd700; letter-spacing: 0.08em;
+    }
+    .level-desc {
+      font-size: 0.6rem; line-height: 0.9rem; color: #a0ffff; margin-top: 0.5rem; font-weight: 500;
+      text-shadow: 0 0 6px rgba(0,255,255,0.4); letter-spacing: 0.05em;
+    }
+
+    .footer-bar {
+      position: relative; z-index: 2; text-align: center; margin-top: 1.5rem;
+      color: rgba(255,255,255,0.6); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+      text-shadow: 0 0 4px rgba(0,255,255,0.4),0 0 8px rgba(255,0,255,0.2);
+    }
+
+    .back-btn {
+      position: fixed; left: 1rem; top: 1rem; z-index: 10;
+      background: rgba(0,0,0,0.5); border: 2px solid #ff00ff; color: #ff00ff;
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem; text-shadow: 0 0 6px #ff00ff;
+      box-shadow: 0 0 10px rgba(255,0,255,0.5),0 0 30px rgba(0,255,255,0.4);
+    }
+
+    #link-overlay {
+      position: fixed; inset: 0; background: #000;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 9999;
+    }
+    #link-overlay.active { opacity: 1; pointer-events: all; }
+    #link-overlay-text {
+      color: #00ffff; font-weight: 800; font-size: 1rem; letter-spacing: .15em;
+      text-shadow: 0 0 8px #00ffff, 0 0 18px rgba(0,255,255,0.7), 0 0 32px rgba(255,0,255,0.4);
+      animation: pulse 1s ease-in-out infinite alternate;
+    }
+    @keyframes pulse { 0%{opacity:.6} 100%{opacity:1} }
+
+    .error-box {
+      max-width: 520px; margin: 1rem auto; padding: 0.75rem 1rem; border-radius: 0.75rem;
+      border: 2px solid #ff4d4d; background: rgba(60,0,0,0.5);
+      box-shadow: 0 0 8px rgba(255,77,77,0.6);
+      font-size: 0.7rem; line-height: 1rem;
+    }
+    .error-title {
+      color: #ff8080; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 0.4rem;
+    }
+    .error-body { color: #ffd0d0; }
+    .error-body code { color: #fff; padding: 0 0.25rem; background: rgba(0,0,0,0.4); border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <button class="back-btn" id="back-btn">⟵ LINK HUB</button>
+
+  <div class="title-block">
+    <div class="map-title">MISSION SELECT</div>
+    <div class="map-sub">CHOOSE BREACH SITE</div>
+  </div>
+
+  <div id="error-container" class="hidden"></div>
+
+  <div class="map-path-wrapper" id="map-wrapper">
+    <div class="map-path-line"></div>
+    <!-- Nodes inject here -->
+  </div>
+
+  <div class="footer-bar">
+    © SYNC-DIVE STUDIOS AG<br/>ALL SIGNALS MONITORED
+  </div>
+
+  <!-- Load levels with a reliable relative path.
+       If this fails, we’ll show an error box instead of a blank screen. -->
+  <script id="levels-script" src="./levels.js"></script>
+
+  <script>
+    // ----- helpers -----
+    function showError(html) {
+      const c = document.getElementById("error-container");
+      c.classList.remove("hidden");
+      c.innerHTML = `
+        <div class="error-box">
+          <div class="error-title">LEVEL DATA UNAVAILABLE</div>
+          <div class="error-body">${html}</div>
+        </div>`;
+    }
+
+    function getUnlockedLevel() {
+      // Read the SAME key the game writes
+      const raw = localStorage.getItem("levelUnlocked");
+      const n = parseInt(raw, 10);
+      return Number.isFinite(n) ? n : 1;
+    }
+
+    function renderMap() {
+      const wrapper = document.getElementById("map-wrapper");
+
+      // Guard: LEVELS must be present & an array
+      if (!Array.isArray(window.LEVELS) || !window.LEVELS.length) {
+        showError(`
+          Could not find <code>LEVELS</code>. Make sure <code>levels.js</code> exists
+          in the same folder as <code>map.html</code> and exports a global
+          <code>LEVELS</code> array.<br/><br/>
+          Tried to load: <code>./levels.js</code>
+        `);
+        return;
+      }
+
+      const levelUnlocked = getUnlockedLevel();
+
+      const bootPhrases = [
+        "ESTABLISHING LINK...","HANDSHAKE ACCEPTED...","UPLINK SYNCHRONIZING...",
+        "RECONFIGURING SEALS...","CALIBRATING RESONANCE FIELD...","SIGNAL PHASE ALIGNMENT...",
+        "GLYPH ROUTES ONLINE...","NEURAL LOCK VERIFIED..."
+      ];
+
+      window.LEVELS.forEach((level) => {
+        const locked = level.id > levelUnlocked;
+
+        const node = document.createElement("div");
+        node.className = "level-node" + (locked ? " locked" : "");
+        node.dataset.levelId = level.id;
+
+        node.innerHTML = `
+          <div class="level-dot"></div>
+          <div class="level-header">
+            <div class="level-left">
+              <div class="level-id">LEVEL ${String(level.id).padStart(2,"0")}</div>
+              <div class="level-name">${level.name || ("Link " + level.id)}</div>
+            </div>
+            <div class="level-stats">
+              HP ${level.discipleMaxHP || 500}<br/>
+              MOVES ${level.moves || 20}
+            </div>
+          </div>
+          <div class="level-desc">${level.desc || "Primordial breach detected."}</div>
+        `;
+
+        if (!locked) {
+          node.addEventListener("click", () => {
+            const overlay = document.getElementById("link-overlay");
+            const text = document.getElementById("link-overlay-text");
+            text.textContent = bootPhrases[Math.floor(Math.random() * bootPhrases.length)];
+            overlay.classList.add("active");
+            setTimeout(() => {
+              // IMPORTANT: launch the monolithic build
+              window.location.href = `game_fixed.html?level=${level.id}`;
+            }, 900);
+          });
+        }
+
+        wrapper.appendChild(node);
+      });
+    }
+
+    // If levels.js fails to load, the window.LEVELS will be missing.
+    // We render after DOM is ready so Tailwind has applied, and after a tick so levels.js can execute.
+    window.addEventListener("DOMContentLoaded", () => {
+      const script = document.getElementById("levels-script");
+
+      // If the script tag encountered a network error, "error" fires.
+      script.addEventListener("error", () => {
+        showError(`
+          Failed to load <code>levels.js</code>.<br/>
+          Check the server logs and make sure you’re serving files from the same directory
+          (e.g. run <code>python server.py</code> in the folder that contains
+          <code>index.html</code>, <code>map.html</code>, <code>levels.js</code>, and <code>game_fixed.html</code>).
+        `);
+      });
+
+      // Try to render soon after load; if LEVELS isn't ready yet, wait a moment and retry once.
+      const tryRender = () => {
+        if (Array.isArray(window.LEVELS) && window.LEVELS.length) {
+          renderMap();
+        } else {
+          // one soft retry
+          setTimeout(() => {
+            if (Array.isArray(window.LEVELS) && window.LEVELS.length) renderMap();
+            else showError(`No levels found in <code>LEVELS</code>. Did you export it in <code>levels.js</code>?`);
+          }, 50);
+        }
+      };
+
+      // Give the external script a tiny tick to execute
+      setTimeout(tryRender, 0);
+    });
+
+    // back to title screen
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("back-btn").addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+    });
+  </script>
+
+  <!-- Transition overlay -->
+  <div id="link-overlay">
+    <div id="link-overlay-text">ESTABLISHING LINK...</div>
+  </div>
+</body>
+</html>
