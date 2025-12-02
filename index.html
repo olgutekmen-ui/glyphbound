@@ -2,163 +2,275 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
-  <title>Glyphlink Protocol · Sync-Dive Studios AG</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Glyphbound: Protocol</title>
   <style>
+    /* =========================================
+       GLOBAL & RESET
+       ========================================= */
+    :root {
+      --neon-blue: #0ea5e9;
+      --neon-purple: #d946ef;
+      --bg-dark: #020617;
+      --text-color: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: "Orbitron", sans-serif;
-      background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, #0f0f1a 60%);
-      min-height: 100vh;
       margin: 0;
       padding: 0;
-      color: #fff;
+      background-color: var(--bg-dark);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      
+      /* CYBERPUNK GRID BACKGROUND */
+      background-image: 
+        linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(2, 6, 23, 0.2), #020617 90%);
+      background-size: 40px 40px, 40px 40px, 100% 100%;
+    }
+
+    /* =========================================
+       LOGO CONTAINER
+       ========================================= */
+    .logo-wrapper {
+      position: relative;
+      margin-bottom: 3rem;
+      animation: floatLogo 4s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #studio-logo {
+      width: 220px;
+      height: 220px;
+      border-radius: 24px;
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.2), 0 0 60px rgba(217, 70, 239, 0.1);
+      transition: transform 0.3s ease;
+      display: block;
+      object-fit: cover;
+      background: #0f172a;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo-wrapper::after {
+      content: '';
+      position: absolute;
+      top: -10px; left: -10px; right: -10px; bottom: -10px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1;
+      animation: pulseRing 3s infinite;
+    }
+
+    /* TAGLINE STYLE */
+    .studio-tagline {
+        margin-top: 20px;
+        color: #38bdf8;
+        font-family: monospace;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        animation: fadeIn 2s ease-in;
+    }
+
+    /* =========================================
+       BUTTON STYLES
+       ========================================= */
+    .action-area {
+      text-align: center;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 0.5s forwards;
+    }
+
+    #init-btn {
+      background: transparent;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.2rem;
+      padding: 1rem 2.5rem;
+      border: 1px solid var(--neon-blue);
+      border-radius: 4px;
+      cursor: pointer;
       position: relative;
       overflow: hidden;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
     }
-    .bg-glow {
-      position: absolute;
-      width: 60vmax; height: 60vmax; border-radius: 50%;
-      background: radial-gradient(circle,
-        rgba(0,255,255,0.18) 0%,
-        rgba(255,0,255,0.08) 40%,
-        rgba(0,0,0,0) 70%);
-      filter: blur(40px);
-      animation: pulseGlow 3s ease-in-out infinite alternate;
-      pointer-events: none;
+
+    #init-btn:hover {
+      background: rgba(14, 165, 233, 0.15);
+      box-shadow: 0 0 25px var(--neon-blue);
+      text-shadow: 0 0 8px #fff;
+      transform: translateY(-2px);
+      border-color: #fff;
     }
-    @keyframes pulseGlow {
-      0% { opacity: .6; transform: scale(1); }
-      100% { opacity: .85; transform: scale(1.05); }
+
+    #init-btn::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--neon-blue);
     }
-    .scanlines {
-      position: absolute; inset: 0;
-      background-image: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.04) 0px,
-        rgba(255,255,255,0.04) 1px,
-        rgba(0,0,0,0) 2px,
-        rgba(0,0,0,0) 4px
-      );
-      mix-blend-mode: screen; opacity: .15; pointer-events: none;
+    #init-btn::after {
+      content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: var(--neon-purple);
     }
-    .title-card {
-      background: rgba(15,15,26,0.6);
-      border: 2px solid #00ffff;
-      box-shadow: 0 0 20px rgba(0,255,255,0.5), 0 0 60px rgba(255,0,255,0.3);
-      border-radius: 1rem;
-      max-width: 420px; width: calc(100% - 2rem);
-      padding: 1.5rem 1.25rem 2rem;
-      text-align: center; position: relative; z-index: 10;
-    }
-    .studio-logo-frame {
-      width: 140px; height: 140px; max-width: 50%; margin: auto;
-      border-radius: 0.75rem;
-      background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 16px rgba(0,255,255,0.5), 0 0 40px rgba(255,0,255,0.3);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .studio-logo-img { width: 100%; height: 100%; object-fit: contain; }
-    .game-title {
-      color: #00ffff; font-weight: 800; font-size: 1.5rem; letter-spacing: .08em;
-      text-shadow: 0 0 8px #00ffff, 0 0 16px rgba(0,255,255,0.6);
+
+    .system-status {
       margin-top: 1rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      letter-spacing: 0.1em;
+      font-family: monospace;
     }
-    .game-subtitle {
-      font-size: .75rem; color: #ffd700; font-weight: 600; letter-spacing: .08em;
-      text-shadow: 0 0 6px #ffd700; margin-top: .4rem;
+
+    #debug-msg {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 10px;
+        font-family: monospace;
+        display: none;
+        background: rgba(0,0,0,0.8);
+        padding: 5px;
+        border-radius: 4px;
+        z-index: 10;
     }
-    .start-btn {
-      margin-top: 1.5rem;
-      background: radial-gradient(circle at 20% 20%, #ff00ff 0%, #a000ff 60%, #400040 100%);
-      border-radius: .75rem; border: 2px solid #fff; color: #000;
-      font-weight: 800; font-size: .9rem; letter-spacing: .12em;
-      padding: .9rem 1rem; min-width: 10rem; text-transform: uppercase;
-      box-shadow: 0 0 12px #ff00ff, 0 0 36px rgba(255,0,255,0.55), 0 0 60px rgba(0,255,255,0.4);
-      cursor: pointer; transition: all .15s ease-in-out;
+
+    /* =========================================
+       LORE OVERLAY STYLES
+       ========================================= */
+    #lore-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(2, 6, 23, 0.98); z-index: 10000;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+        padding: 2rem; text-align: center;
+        animation: fadeIn 0.5s ease-out;
     }
-    .start-btn:active { transform: scale(.97); }
-    .footer-text {
-      font-size: .6rem; text-transform: uppercase; color: rgba(255,255,255,0.6);
-      letter-spacing: .15em; margin-top: 1.5rem;
-      text-shadow: 0 0 4px rgba(0,255,255,0.4), 0 0 8px rgba(255,0,255,0.2);
+    .lore-title { 
+        font-size: 1.8rem; color: #ef4444; font-weight: 900; letter-spacing: 2px; 
+        margin-bottom: 1rem; text-shadow: 0 0 15px #ef4444; 
     }
-    #link-overlay {
-      position: fixed; inset: 0; background: #000;
-      display: flex; align-items: center; justify-content: center; flex-direction: column;
-      opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 9999;
+    .lore-text { 
+        max-width: 500px; line-height: 1.6; color: #cbd5e1; margin-bottom: 2rem; font-size: 1rem; 
     }
-    #link-overlay.active { opacity: 1; pointer-events: all; }
-    #link-overlay-text {
-      color: #00ffff; font-weight: 800; font-size: 1rem; letter-spacing: .15em;
-      text-shadow: 0 0 8px #00ffff, 0 0 18px rgba(0,255,255,0.7), 0 0 32px rgba(255,0,255,0.4);
-      animation: pulse 1s ease-in-out infinite alternate;
+    .lore-btn {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; color: #fff;
+        padding: 1rem 3rem; font-weight: bold; border-radius: 4px; cursor: pointer;
+        text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(14,165,233,0.4);
     }
-    @keyframes pulse { 0%{opacity:.6} 100%{opacity:1} }
+
+    /* =========================================
+       ANIMATIONS
+       ========================================= */
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.5; border-color: var(--neon-blue); }
+      100% { transform: scale(1.1); opacity: 0; border-color: var(--neon-purple); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; } to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <div class="bg-glow"></div>
-  <div class="scanlines"></div>
 
-  <div class="title-card">
-    <div class="studio-logo-frame">
-      <!-- moved to /assets -->
-      <img src="assets/LogoSyncStudios.png" alt="Sync-Dive Studios AG" class="studio-logo-img" />
-    </div>
-
-    <div class="game-title">GLYPHLINK PROTOCOL</div>
-    <div class="game-subtitle">PRIMORDIAL LINK SIMULATION</div>
-
-    <button id="start-btn" class="start-btn">START LINK</button>
-
-    <div class="footer-text">
-      © SYNC-DIVE STUDIOS AG<br />ALL SIGNALS MONITORED
-    </div>
+  <div class="logo-wrapper">
+    <img id="studio-logo" src="assets/LogoSyncStudios.png" alt="SYNC-DIVE" />
+    <div class="studio-tagline">Dream. Dive. Disrupt.</div>
+    <div id="debug-msg"></div>
   </div>
 
-  <!-- Fade overlay -->
-  <div id="link-overlay">
-    <div id="link-overlay-text">ESTABLISHING LINK...</div>
+  <div class="action-area">
+    <button id="init-btn">Initialize Link</button>
+    <div style="margin-top:10px; font-size:0.7rem; color:#64748b; cursor:pointer;" onclick="recoverData()">[ RECOVER DATA ]</div>
+    <div class="system-status" id="status-text">SYSTEM STANDBY...</div>
   </div>
+
+  <div id="lore-overlay">
+      <div class="lore-title">NEO SEOUL ALERT</div>
+      <div class="lore-text">
+          <p>The <strong>DISCIPLES</strong>—rogue AI constructs—have seized the city grid. They are corrupting the data flow with chaos.</p>
+          <p>As a <strong>GLYPHBOUND COMMANDER</strong>, you must link with our Heroes (Aelia, Nocta, Vyra, Iona) to purge the corruption.</p>
+          <p style="color:#38bdf8; font-weight:bold; margin-top:15px;">MATCH GLYPHS. CHARGE ABILITIES. RESTORE ORDER.</p>
+      </div>
+      <button class="lore-btn" onclick="closeLore()">ACCEPT MISSION</button>
+  </div>
+
+  <script src="save_system.js"></script>
 
   <script>
-    const startBtn = document.getElementById("start-btn");
-    const overlay = document.getElementById("link-overlay");
-    const overlayText = document.getElementById("link-overlay-text");
+    const btn = document.getElementById("init-btn");
+    const status = document.getElementById("status-text");
+    const img = document.getElementById("studio-logo");
+    const debug = document.getElementById("debug-msg");
+    const lore = document.getElementById("lore-overlay");
 
-    const bootPhrases = [
-      "ESTABLISHING LINK...",
-      "HANDSHAKE ACCEPTED...",
-      "SYNCING CORE MATRICES...",
-      "SEALING BREACH...",
-      "DEPLOYING NEURAL WEAVE...",
-      "CALIBRATING RESONANCE FIELD...",
-      "UPLINKING OPERATORS...",
-      "PRIMING GLYPH STREAM...",
-      "AUTHENTICATION VERIFIED...",
-      "BOOT SEQUENCE COMPLETE..."
-    ];
+    // LORE LOGIC
+    const LORE_KEY = "nx_lore_seen_v1";
+    
+    function checkLore() {
+        if(!localStorage.getItem(LORE_KEY)) {
+            lore.style.display = "flex";
+        }
+    }
+    
+    function closeLore() {
+        localStorage.setItem(LORE_KEY, "true");
+        lore.style.opacity = "0";
+        setTimeout(() => lore.style.display = "none", 500);
+    }
+    
+    // Check immediately
+    checkLore();
 
-    startBtn.addEventListener("click", () => {
-      overlayText.textContent = bootPhrases[Math.floor(Math.random() * bootPhrases.length)];
-      overlay.classList.add("active");
+    function recoverData() {
+        const code = prompt("PASTE RECOVERY CODE:");
+        if(code && window.SaveSys) SaveSys.importData(code);
+        else if (code) alert("Save System not loaded.");
+    }
+
+    img.onerror = function() {
+        debug.style.display = "block";
+        debug.innerHTML = "ERROR: Image not found.<br>Checked: assets/LogoSyncStudios.png";
+        this.style.background = "#334155";
+    };
+
+    btn.onclick = () => {
+      // If Lore is open, close it first
+      if (window.getComputedStyle(lore).display === "flex") {
+          closeLore();
+          return;
+      }
+        
+      btn.style.backgroundColor = "#fff";
+      btn.style.color = "#000";
+      status.style.color = "#0ea5e9";
+      status.textContent = "ESTABLISHING CONNECTION...";
+      
       setTimeout(() => {
-        // If you want to skip the map, change to: "game_fixed.html?level=1"
         window.location.href = "map.html";
-      }, 900);
-    });
+      }, 400);
+    };
   </script>
 </body>
 </html>

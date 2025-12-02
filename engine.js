@@ -1,94 +1,290 @@
-// engine.js
-import { initUI } from "./ui.js";
-import { LEVELS } from "./levels.js"; // optional if you use structured levels
+/* engine.js — V1.10 (REVIVE & TIMER LOGIC) */
+(function () {
+  const GS = window.GameState || window.gameState || (window.gameState = {});
+  const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
+  let timerInterval = null;
+  let defeatReason = 'moves'; // Default
 
-export const gameState = { score:0, moves:20, ... };
-
-export function initializeBoard() { /* fill board */ }
-export function renderBoard() { /* draw board */ }
-export function performSwap(r1,c1,r2,c2) { /* swap and check matches */ }
-export async function processMatches() { /* cascades */ }
-export function activateHero(heroKey) { /* aelia/nocta/vyra/iona abilities */ }
-export function restartGame() { initializeBoard(); renderBoard(); 
-export function startDiscipleAttackLoop() {
-  if (window.__discipleLoopActive) return;
-  window.__discipleLoopActive = true;
-  setInterval(() => {
-    if (window.gameState?.discipleHP > 0 && !window.gameState?.isPaused) {
-      if (window.discipleAttackTick) window.discipleAttackTick();
-if (gameState.discipleShield > 0) {
-  const absorbed = Math.min(damage, gameState.discipleShield);
-  gameState.discipleShield -= absorbed;
-  damage -= absorbed;
-  updateShieldUI();
-  if (gameState.discipleShield <= 0) showAlert("Shield broken!");
-}
-
-    }
-  }, 1000);
-}
-}
-// ==========================================================
-// 🛡 Shield-aware disciple damage + attack tick
-// ==========================================================
-
-// Apply damage from disciple to player (hero side)
-export function discipleAttackTick() {
-  const gs = window.gameState;
-  if (!gs || gs.discipleHP <= 0) return;
-
-  // Simple damage formula (tune later)
-  const damage = 25;
-
-  applyDiscipleDamage(damage);
-}
-
-// Core damage function: shield absorbs first, then HP
-export function applyDiscipleDamage(amount) {
-  const gs = window.gameState;
-  if (!gs) return;
-
-  let dmg = amount;
-  let shieldAbsorbed = 0;
-
-  // Absorb damage with shield if present
-  if (gs.discipleShield && gs.discipleShield > 0) {
-    const absorb = Math.min(dmg, gs.discipleShield);
-    gs.discipleShield -= absorb;
-    dmg -= absorb;
-    shieldAbsorbed = absorb;
-    if (window.updateShieldUI) window.updateShieldUI();
-
-    if (gs.discipleShield <= 0) {
-      if (window.showAlert) window.showAlert("Shield broken!", 1200);
-    }
+  // --- TIMER LOGIC ---
+  function startLevelTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      // Reset Time for Level
+      // Default to 120s if level data missing
+      GS.timeLeft = (GS.activeLevel && GS.activeLevel.time) ? GS.activeLevel.time : 120; 
+      
+      timerInterval = setInterval(() => {
+          // PAUSE if animating (warning) or game over
+          if (GS.isProcessing || GS.victoryTriggered) return;
+          
+          GS.timeLeft--;
+          
+          if (window.UI && UI.updateStats) UI.updateStats();
+          
+          if (GS.timeLeft <= 0) {
+              clearInterval(timerInterval);
+              handleDefeat('time');
+          }
+      }, 1000);
   }
 
-  // Any remaining damage hits HP
-  if (dmg > 0) {
-    gs.discipleHP = Math.max(0, gs.discipleHP - dmg);
-    if (window.updateStats) window.updateStats();
+  function getSafeRandomGlyph() {
+    const c=[]; const N=GS.GRID_SIZE; for(let r=0;r<N;r++)for(let k=0;k<N;k++){const l=GS.board[r][k];if(l&&l.kind==="glyph")c.push({r,c:k})}
+    if(!c.length)return null; return c[Math.floor(Math.random()*c.length)];
   }
 
-  // Optional logging
-  console.log(
-    `[damage] ${amount} incoming → ${shieldAbsorbed} absorbed, ${dmg} to HP`
-  );
+  function performDiscipleAttack(type) {
+    if(window.AudioSys) AudioSys.play('warning');
+    const target = getSafeRandomGlyph();
+    if(target) {
+        if (window.FX && FX.shake) FX.shake(1);
+        const {r, c} = target;
+        if (type === "poison") GS.board[r][c] = { kind: "poison" };
+        else if (type === "drain") GS.board[r][c] = { kind: "lava" };
+        else if (type === "deceit") GS.board[r][c] = { kind: "frozen" };
+        else GS.board[r][c] = { kind: "junk" };
+    }
+    if(window.UI && UI.renderBoard) UI.renderBoard();
+  }
 
-  // Check defeat
-  if (gs.discipleHP <= 0) {
-    if (window.showAlert) window.showAlert("Disciple defeated!", 1200);
-    if (typeof window.showVictoryScreen === "function") {
-      window.showVictoryScreen({ wink: "./assets/hero_win.png", color: "#00ffff" });
+  function discipleAttackIfReady() {
+    if (!GS.disciple || GS.discipleHP <= 0) return;
+    const every = GS.discipleAttackRate || 3; 
+    
+    if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
+        // PAUSE GAME & TIMER
+        GS.isProcessing = true; 
+
+        // 1. Target & Glow
+        const target = getSafeRandomGlyph();
+        if(target && window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, true);
+
+        // 2. Warning
+        if (window.UI && UI.flashAlert) UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 1200);
+        
+        // 3. Strike after delay
+        setTimeout(() => { 
+            if(target && window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, false);
+            performDiscipleAttack(GS.disciple.attack || "greed"); 
+            
+            // UNPAUSE
+            GS.isProcessing = false;
+        }, 1000); 
     }
   }
-}
 
-// Expose globally for other modules
-try {
-  window.discipleAttackTick = discipleAttackTick;
-  window.applyDiscipleDamage = applyDiscipleDamage;
-} catch (err) {
-  console.warn("shield damage hooks failed", err);
-}
-window.addEventListener("load", initUI);
+  // --- VICTORY ---
+  async function handleVictory() {
+    if (GS.victoryTriggered) return; 
+    GS.victoryTriggered = true;
+    GS.isProcessing = true; 
+    if(timerInterval) clearInterval(timerInterval);
+    
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
+
+    const reward = 20 + (GS.movesLeft * 2);
+    if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
+    if (window.StorageAPI?.setLevelUnlocked) StorageAPI.setLevelUnlocked(GS.currentLevelId + 1);
+
+    const msgEl = document.getElementById("end-message");
+    const btnNext = document.getElementById("btn-next-level");
+    // Hide Revive Button if it exists from a previous loss
+    const btnRevive = document.getElementById("btn-revive");
+    if(btnRevive) btnRevive.style.display = "none";
+
+    if (msgEl) { msgEl.textContent = `VICTORY! +${reward} Prisma`; msgEl.className = "victory-title"; }
+    
+    if (btnNext) {
+        const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === GS.currentLevelId + 1);
+        if (nextLevelExists) {
+            btnNext.style.display = "block";
+            btnNext.onclick = () => {
+                if (window.economy && window.economy.spendEnergyForLevel()) {
+                    window.location.href = `game.html?level=${GS.currentLevelId+1}`;
+                } else {
+                    if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html";
+                }
+            };
+        } else {
+            btnNext.style.display = "none"; 
+            if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!";
+        }
+    }
+    
+    const hId = ({GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"})[GS.disciple?.id] || "aelia";
+    const imgEl = document.getElementById("end-chibi");
+    if (imgEl) imgEl.src = `assets/${hId}_wink.png`;
+    document.getElementById("end-overlay").style.display = "flex";
+  }
+
+  // --- DEFEAT & REVIVE ---
+  function handleDefeat(reason) {
+    if (GS.victoryTriggered) return;
+    GS.victoryTriggered = true;
+    GS.isProcessing = true;
+    defeatReason = reason || 'moves'; // 'time' or 'moves'
+    
+    if(timerInterval) clearInterval(timerInterval);
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
+
+    const msgEl = document.getElementById("end-message");
+    const btnNext = document.getElementById("btn-next-level");
+    
+    if (msgEl) { 
+        // EXPLICIT REASON
+        msgEl.textContent = defeatReason === 'time' ? "OUT OF TIME" : "OUT OF MOVES"; 
+        msgEl.className = "defeat-title"; 
+    }
+    if(btnNext) btnNext.style.display = "none";
+
+    // Show Disciple
+    const imgEl = document.getElementById("end-chibi");
+    if (imgEl && GS.disciple) {
+        imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`;
+        imgEl.onerror = function() { this.src = "assets/tile_greed.png"; };
+    }
+
+    // INJECT REVIVE BUTTON
+    injectReviveButton();
+
+    document.getElementById("end-overlay").style.display = "flex";
+  }
+
+  function injectReviveButton() {
+      let btn = document.getElementById("btn-revive");
+      const box = document.getElementById("end-box");
+      const playAgain = document.getElementById("btn-play-again");
+      
+      if (!btn) {
+          btn = document.createElement("button");
+          btn.id = "btn-revive";
+          // Premium Look
+          btn.style.cssText = "width:100%; padding:12px; margin-bottom:8px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #d946ef); color:#fff; border:1px solid #c084fc; cursor:pointer; font-weight:900; letter-spacing:1px; text-transform:uppercase; box-shadow:0 0 15px rgba(217, 70, 239, 0.4);";
+          if(box && playAgain) box.insertBefore(btn, playAgain);
+      }
+
+      const cost = 50;
+      const benefit = defeatReason === 'time' ? "+15 SECONDS" : "+5 MOVES";
+      btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">💎 ${cost} PRISMA</span>`;
+      btn.style.display = "block";
+      
+      btn.onclick = () => attemptRevive(cost);
+  }
+
+  function attemptRevive(cost) {
+      if (window.economy && economy.spendPrisma(cost)) {
+          // Apply Benefit
+          if (defeatReason === 'time') {
+              GS.timeLeft += 15;
+              startLevelTimer(); // Restart clock
+          } else {
+              GS.movesLeft += 5;
+              if(window.UI && UI.updateStats) UI.updateStats();
+          }
+
+          // Unlock State
+          GS.victoryTriggered = false;
+          GS.isProcessing = false;
+          defeatReason = null;
+
+          // Hide Overlay
+          document.getElementById("end-overlay").style.display = "none";
+          
+          // Resume Music
+          if(window.AudioSys) AudioSys.playBGM('bgm_battle');
+          
+          // Feedback
+          if(window.UI && UI.flashAlert) UI.flashAlert("SYSTEM RESTORED!", 1000);
+
+      } else {
+          alert(`Insufficient Prisma! Needed: ${cost}`);
+      }
+  }
+
+  // --- CORE LOOP ---
+  async function trySwap(r1, c1, r2, c2) {
+    if (GS.isProcessing || GS.movesLeft <= 0 || GS.timeLeft <= 0 || GS.victoryTriggered) return false;
+    try {
+        const valid = window.Board.performSwap(r1, c1, r2, c2);
+        if (valid) {
+            GS.isProcessing = true;
+            if (window.UI) UI.renderBoard();
+            await delay(250);
+            await window.Board.processBoardUntilStable();
+            GS.movesLeft--;
+            GS.turnsTaken++;
+            if (window.UI) { UI.updateStats(); UI.updateAbilityUI(); }
+
+            if (GS.discipleHP <= 0) { await handleVictory(); return true; } 
+
+            // Check defeat (Moves)
+            if (GS.movesLeft <= 0) { handleDefeat('moves'); return true; }
+            
+            discipleAttackIfReady();
+            
+            return true;
+        } 
+    } catch(err) { console.error(err); } finally {
+        if (!GS.victoryTriggered) GS.isProcessing = false;
+    }
+    return false;
+  }
+
+  async function requestShuffle() {
+      if (GS.isProcessing || GS.victoryTriggered) return;
+      if (GS.movesLeft <= 1) { if(window.UI && UI.flashAlert) UI.flashAlert("NOT ENOUGH MOVES"); return; }
+      if (window.confirm("Shuffle Board? Cost: 1 Move")) {
+          GS.isProcessing = true; GS.movesLeft--;
+          if (window.UI) UI.updateStats();
+          await window.Board.shuffleBoard();
+          if (window.UI) UI.renderBoard();
+          GS.isProcessing = false;
+      }
+  }
+
+  function bootLevel(lvlId) {
+    const id = typeof lvlId === 'number' ? lvlId : window.readLevelIdFromURL();
+    const lvl = (window.LEVELS || []).find((L) => L.id === id) || window.LEVELS[0];
+
+    GS.currentLevelId = id;
+    GS.activeLevel = lvl;
+    GS.disciple = lvl.disciple;
+    GS.discipleMaxHP = lvl.discipleMaxHP || 800;
+    GS.discipleHP = GS.discipleMaxHP;
+    GS.discipleAttackRate = lvl.attackRate || 3; 
+
+    GS.GRID_SIZE = 9;
+    GS.movesLeft = lvl.moves || 25;
+    GS.score = 0;
+    GS.turnsTaken = 0;
+    GS.aeliaCharge=0; GS.noctaCharge=0; GS.vyraCharge=0; GS.ionaCharge=0;
+    
+    GS.isProcessing = false;
+    GS.victoryTriggered = false;
+    GS.timeLeft = 0; // Reset before starting timer
+
+    if(window.AudioSys) AudioSys.playBGM('bgm_battle');
+
+    if (window.Board?.initBoard) {
+        Board.initBoard(GS.GRID_SIZE);
+        if(Board.processBoardUntilStable) Board.processBoardUntilStable();
+    }
+    
+    if (window.UI) {
+      UI.renderBoard(); UI.updateStats(); UI.updateDiscipleBadge();
+      UI.updateChibiUI(); UI.updateAbilityUI();
+    }
+    
+    // START CLOCK
+    startLevelTimer();
+  }
+
+  function restartLevel() {
+      if (window.economy && window.economy.spendEnergyForLevel()) {
+          bootLevel(GS.currentLevelId);
+          document.getElementById("end-overlay").style.display = "none";
+      } else { if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html"; }
+  }
+
+  window.Engine = { bootLevel, restartLevel, trySwap, handleVictory, requestShuffle };
+})();

@@ -2,302 +2,213 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
-  <title>Mission Map · Glyphlink Protocol</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Glyphbound: Sector Map</title> <link rel="stylesheet" href="style.css" />
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap");
-
-    body {
-      font-family: "Orbitron", sans-serif;
-      background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, #0f0f1a 60%);
-      min-height: 100vh;
-      margin: 0;
-      padding: 1.5rem 1rem 5rem;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow-x: hidden;
+    /* ... (Keep your existing CSS) ... */
+    
+    /* NEW: DATA MODAL STYLES */
+    #data-modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(2, 6, 23, 0.95); z-index: 10000;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
     }
-
-    .bg-glow {
-      position: absolute;
-      width: 70vmax; height: 70vmax;
-      top: 10%; left: 50%; transform: translateX(-50%);
-      border-radius: 50%;
-      background: radial-gradient(circle,
-        rgba(0,255,255,0.14) 0%,
-        rgba(255,0,255,0.07) 40%,
-        rgba(0,0,0,0) 70%);
-      filter: blur(50px);
-      animation: pulseGlow 3s ease-in-out infinite alternate;
-      pointer-events: none; z-index: 0;
+    #data-box {
+        background: #0f172a; border: 1px solid #334155; padding: 2rem;
+        border-radius: 12px; width: 90%; max-width: 400px; text-align: center;
+        box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
-    @keyframes pulseGlow {
-      0%   { opacity: 0.5; transform: translateX(-50%) scale(1); }
-      100% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+    .data-textarea {
+        width: 100%; height: 100px; background: #020617; border: 1px solid #1e293b;
+        color: #38bdf8; font-family: monospace; font-size: 0.8rem; padding: 10px;
+        margin: 10px 0; resize: none; word-break: break-all;
     }
-
-    .title-block { text-align: center; position: relative; z-index: 2; margin-bottom: 1rem; }
-    .map-title {
-      color: #00ffff; font-weight: 800; font-size: 1rem; line-height: 1rem; letter-spacing: 0.12em;
-      text-shadow: 0 0 8px #00ffff,0 0 16px rgba(0,255,255,0.6);
+    .data-btn {
+        width: 48%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none;
     }
-    .map-sub {
-      color: #ffd700; font-size: 0.7rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.1em;
-      text-shadow: 0 0 6px #ffd700; margin-top: 0.4rem;
-    }
-
-    .map-path-wrapper {
-      position: relative; flex: 1; max-width: 480px; width: 100%; margin: 0 auto; z-index: 2;
-      overflow-y: auto; padding-bottom: 4rem;
-    }
-
-    .map-path-line {
-      position: absolute; left: 50%; top: 0; width: 4px; height: 100%; transform: translateX(-50%);
-      background: linear-gradient(to bottom,
-        rgba(0,255,255,0.8) 0%,
-        rgba(255,0,255,0.5) 50%,
-        rgba(0,255,255,0.15) 100%);
-      box-shadow: 0 0 10px rgba(0,255,255,0.7), 0 0 30px rgba(255,0,255,0.5);
-      border-radius: 999px; opacity: 0.4;
-    }
-
-    .level-node {
-      position: relative; background: rgba(15,15,26,0.6);
-      border: 2px solid #00ffff; box-shadow: 0 0 10px rgba(0,255,255,0.6),0 0 30px rgba(255,0,255,0.4);
-      border-radius: 0.75rem; padding: 0.75rem 1rem; width: calc(100% - 3rem);
-      max-width: 360px; margin: 1.25rem auto; display: flex; flex-direction: column;
-      align-items: flex-start; color: #fff; text-align: left; cursor: pointer; transition: all 0.15s;
-    }
-    .level-node.locked {
-      filter: grayscale(100%) brightness(0.5);
-      border-color: rgba(128,128,128,0.4); box-shadow: 0 0 6px rgba(128,128,128,0.3);
-      cursor: not-allowed;
-    }
-    .level-node:hover:not(.locked) {
-      box-shadow: 0 0 14px rgba(0,255,255,0.8), 0 0 32px rgba(255,0,255,0.6);
-      transform: scale(1.02);
-    }
-
-    .level-dot {
-      position: absolute; left: 50%; top: 0; transform: translate(-50%, -1rem);
-      width: 1rem; height: 1rem; border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #00ffff 40%, rgba(0,0,0,0) 70%);
-      border: 2px solid #fff; box-shadow: 0 0 8px #00ffff, 0 0 20px rgba(0,255,255,0.7), 0 0 36px rgba(255,0,255,0.5);
-    }
-
-    .level-header { display: flex; width: 100%; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
-    .level-left { display: flex; flex-direction: column; }
-    .level-id {
-      color: #00ffff; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-shadow: 0 0 6px #00ffff;
-    }
-    .level-name {
-      color: #fff; font-size: 0.8rem; line-height: 1rem; font-weight: 700; margin-top: 0.25rem;
-      text-shadow: 0 0 6px rgba(255,255,255,0.5);
-    }
-    .level-stats {
-      font-size: 0.6rem; line-height: 0.8rem; text-align: right; min-width: 6rem; font-weight: 600;
-      color: #ffd700; text-shadow: 0 0 6px #ffd700; letter-spacing: 0.08em;
-    }
-    .level-desc {
-      font-size: 0.6rem; line-height: 0.9rem; color: #a0ffff; margin-top: 0.5rem; font-weight: 500;
-      text-shadow: 0 0 6px rgba(0,255,255,0.4); letter-spacing: 0.05em;
-    }
-
-    .footer-bar {
-      position: relative; z-index: 2; text-align: center; margin-top: 1.5rem;
-      color: rgba(255,255,255,0.6); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
-      text-shadow: 0 0 4px rgba(0,255,255,0.4),0 0 8px rgba(255,0,255,0.2);
-    }
-
-    .back-btn {
-      position: fixed; left: 1rem; top: 1rem; z-index: 10;
-      background: rgba(0,0,0,0.5); border: 2px solid #ff00ff; color: #ff00ff;
-      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem; text-shadow: 0 0 6px #ff00ff;
-      box-shadow: 0 0 10px rgba(255,0,255,0.5),0 0 30px rgba(0,255,255,0.4);
-    }
-
-    #link-overlay {
-      position: fixed; inset: 0; background: #000;
-      display: flex; align-items: center; justify-content: center; flex-direction: column;
-      opacity: 0; pointer-events: none; transition: opacity .4s ease; z-index: 9999;
-    }
-    #link-overlay.active { opacity: 1; pointer-events: all; }
-    #link-overlay-text {
-      color: #00ffff; font-weight: 800; font-size: 1rem; letter-spacing: .15em;
-      text-shadow: 0 0 8px #00ffff, 0 0 18px rgba(0,255,255,0.7), 0 0 32px rgba(255,0,255,0.4);
-      animation: pulse 1s ease-in-out infinite alternate;
-    }
-    @keyframes pulse { 0%{opacity:.6} 100%{opacity:1} }
-
-    .error-box {
-      max-width: 520px; margin: 1rem auto; padding: 0.75rem 1rem; border-radius: 0.75rem;
-      border: 2px solid #ff4d4d; background: rgba(60,0,0,0.5);
-      box-shadow: 0 0 8px rgba(255,77,77,0.6);
-      font-size: 0.7rem; line-height: 1rem;
-    }
-    .error-title {
-      color: #ff8080; font-weight: 800; letter-spacing: 0.08em; margin-bottom: 0.4rem;
-    }
-    .error-body { color: #ffd0d0; }
-    .error-body code { color: #fff; padding: 0 0.25rem; background: rgba(0,0,0,0.4); border-radius: 4px; }
+    .btn-save { background: #38bdf8; color: #000; }
+    .btn-load { background: #334155; color: #fff; border: 1px solid #475569; }
   </style>
 </head>
-<body>
-  <div class="bg-glow"></div>
 
-  <button class="back-btn" id="back-btn">⟵ LINK HUB</button>
+<body id="map-screen">
 
-  <div class="title-block">
-    <div class="map-title">MISSION SELECT</div>
-    <div class="map-sub">CHOOSE BREACH SITE</div>
+  <div id="map-header">
+    <div class="header-top">
+      <h1 id="map-title">GLYPHBOUND // MAP</h1> 
+      <div class="nav-actions">
+        <button class="nav-btn" onclick="openDataMenu()">DATA</button>
+        <button class="nav-btn" onclick="window.location.href='shop.html'">DEPOT</button>
+        <button class="nav-btn" onclick="window.location.href='index.html'">LOGOUT</button>
+      </div>
+    </div>
+    
+    <div id="map-currencies">
+      <div class="currency" style="border-color:#facc15; color:#facc15">⚡ <span id="energy-amt">--</span></div>
+      <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">💎 <span id="prisma-amt">--</span></div>
+      <div class="currency" style="border-color:#f472b6; color:#f472b6">🪙 <span id="aurum-amt">--</span></div>
+      <div style="color:#64748b; margin-left:8px; display:flex; align-items:center;">
+        REGEN: <span id="energy-timer" style="margin-left:4px; color:#fff;">--:--</span>
+      </div>
+    </div>
   </div>
 
-  <div id="error-container" class="hidden"></div>
-
-  <div class="map-path-wrapper" id="map-wrapper">
-    <div class="map-path-line"></div>
-    <!-- Nodes inject here -->
+  <div id="sector-visualizer">
+    <svg id="radar-svg" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="20" class="radar-ring boss-zone" id="ring-4" />
+      <path d="M 100,100 m -40,0 a 40,40 0 1,0 80,0 a 40,40 0 1,0 -80,0" class="radar-ring" id="ring-3" />
+      <path d="M 100,100 m -60,0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0" class="radar-ring" id="ring-2" />
+      <path d="M 100,100 m -80,0 a 80,80 0 1,0 160,0 a 80,80 0 1,0 -160,0" class="radar-ring" id="ring-1" />
+      <path d="M 100,100 m -96,0 a 96,96 0 1,0 192,0 a 96,96 0 1,0 -192,0" class="radar-ring" id="ring-0" />
+    </svg>
+    <div class="zone-info-panel">SECTOR SCAN: <span id="active-zone-name">LOADING...</span></div>
   </div>
 
-  <div class="footer-bar">
-    © SYNC-DIVE STUDIOS AG<br/>ALL SIGNALS MONITORED
+  <div class="zone-tabs-container" id="zone-tabs"></div>
+  <div id="zones-display" class="zones-display"></div>
+
+  <div id="data-modal">
+      <div id="data-box">
+          <h3 style="color:#fff; margin-top:0;">DATA MANAGEMENT</h3>
+          <p style="font-size:0.8rem; color:#94a3b8;">Copy code to save. Paste code to load.</p>
+          <textarea id="save-string" class="data-textarea" placeholder="Paste Save Code Here..."></textarea>
+          <div style="display:flex; justify-content:space-between; margin-top:10px;">
+              <button class="data-btn btn-save" onclick="generateSave()">GET SAVE CODE</button>
+              <button class="data-btn btn-load" onclick="loadSave()">LOAD DATA</button>
+          </div>
+          <button onclick="document.getElementById('data-modal').style.display='none'" style="margin-top:15px; background:none; border:none; color:#64748b; cursor:pointer; text-decoration:underline;">CLOSE</button>
+      </div>
   </div>
 
-  <!-- Load levels with a reliable relative path.
-       If this fails, we’ll show an error box instead of a blank screen. -->
-  <script id="levels-script" src="./levels.js"></script>
-
+  <script src="state.js"></script>
+  <script src="economy.js"></script>
+  <script src="levels.js"></script>
+  <script src="audio.js"></script>
+  <script src="save_system.js"></script> 
+  
   <script>
-    // ----- helpers -----
-    function showError(html) {
-      const c = document.getElementById("error-container");
-      c.classList.remove("hidden");
-      c.innerHTML = `
-        <div class="error-box">
-          <div class="error-title">LEVEL DATA UNAVAILABLE</div>
-          <div class="error-body">${html}</div>
-        </div>`;
+    // --- SAVE LOGIC ---
+    function openDataMenu() {
+        document.getElementById('data-modal').style.display = 'flex';
+        document.getElementById('save-string').value = ""; 
     }
 
-    function getUnlockedLevel() {
-      // Read the SAME key the game writes
-      const raw = localStorage.getItem("levelUnlocked");
-      const n = parseInt(raw, 10);
-      return Number.isFinite(n) ? n : 1;
+    function generateSave() {
+        if(!window.SaveSys) return alert("System Loading...");
+        const code = SaveSys.exportData();
+        const area = document.getElementById('save-string');
+        area.value = code;
+        area.select();
+        document.execCommand('copy'); 
+        alert("CODE COPIED TO CLIPBOARD!");
     }
 
-    function renderMap() {
-      const wrapper = document.getElementById("map-wrapper");
+    function loadSave() {
+        if(!window.SaveSys) return alert("System Loading...");
+        const code = document.getElementById('save-string').value.trim();
+        if(!code) return alert("Please paste a code first.");
+        if(confirm("Overwrite current progress?")) {
+            SaveSys.importData(code);
+        }
+    }
 
-      // Guard: LEVELS must be present & an array
-      if (!Array.isArray(window.LEVELS) || !window.LEVELS.length) {
-        showError(`
-          Could not find <code>LEVELS</code>. Make sure <code>levels.js</code> exists
-          in the same folder as <code>map.html</code> and exports a global
-          <code>LEVELS</code> array.<br/><br/>
-          Tried to load: <code>./levels.js</code>
-        `);
-        return;
+    // --- MAP LOGIC ---
+    (function() {
+      const ZONES = ["OUTSKIRTS", "INDUSTRIAL", "ECO-SECTOR", "HIGH-TECH", "CORE"];
+      const allLevels = window.LEVELS || [];
+      const unlocked = parseInt(localStorage.getItem("levelUnlocked") || "1", 10);
+      
+      const tabsEl = document.getElementById("zone-tabs");
+      const displayEl = document.getElementById("zones-display");
+      const zoneNameEl = document.getElementById("active-zone-name");
+
+      if (window.AudioSys) AudioSys.playBGM('bgm_map');
+
+      const zoneData = [[], [], [], [], []];
+      allLevels.forEach(l => {
+        const zIndex = Math.floor((l.id - 1) / 10);
+        if(zoneData[zIndex]) zoneData[zIndex].push(l);
+      });
+
+      ZONES.forEach((name, i) => {
+        const tab = document.createElement("div");
+        tab.className = "zone-tab";
+        tab.innerText = `Z${i+1}: ${name}`;
+        tab.onclick = () => switchZone(i);
+        tabsEl.appendChild(tab);
+
+        const container = document.createElement("div");
+        container.className = "zone-content";
+        const grid = document.createElement("div");
+        grid.className = "hex-grid";
+        
+        // Safety check if zoneData[i] exists
+        if(zoneData[i]) {
+            zoneData[i].forEach(lvl => {
+              const isLocked = lvl.id > unlocked;
+              const isBoss = (lvl.id % 10 === 0);
+              
+              const hex = document.createElement("div");
+              let classes = "hex-node";
+              if(isBoss) classes += " boss";
+              if(isLocked) classes += " locked";
+              if(lvl.id < unlocked) classes += " completed";
+              
+              hex.className = classes;
+              hex.innerHTML = `<span class="lvl-id">${lvl.id}</span><span class="lvl-label">${isLocked?"LOCK":(isBoss?"BOSS":"SEC")}</span>`;
+              
+              if(!isLocked) {
+                hex.onclick = () => {
+                  if (window.economy && window.economy.spendEnergyForLevel()) {
+                    window.location.href = `game.html?level=${lvl.id}`;
+                  } else if (confirm("Low Energy. Visit Supply Depot?")) {
+                    window.location.href = "shop.html";
+                  }
+                };
+              }
+              grid.appendChild(hex);
+            });
+        }
+        container.appendChild(grid);
+        displayEl.appendChild(container);
+      });
+
+      function switchZone(idx) {
+        document.querySelectorAll(".zone-tab").forEach((t, i) => t.classList.toggle("active", i === idx));
+        document.querySelectorAll(".zone-content").forEach((c, i) => c.classList.toggle("active", i === idx));
+        document.querySelectorAll(".radar-ring").forEach((r, i) => r.classList.toggle("active", i === idx));
+        zoneNameEl.innerText = ZONES[idx];
       }
 
-      const levelUnlocked = getUnlockedLevel();
+      let currentZoneIdx = Math.floor((unlocked - 1) / 10);
+      if(currentZoneIdx > 4) currentZoneIdx = 4;
+      switchZone(currentZoneIdx);
 
-      const bootPhrases = [
-        "ESTABLISHING LINK...","HANDSHAKE ACCEPTED...","UPLINK SYNCHRONIZING...",
-        "RECONFIGURING SEALS...","CALIBRATING RESONANCE FIELD...","SIGNAL PHASE ALIGNMENT...",
-        "GLYPH ROUTES ONLINE...","NEURAL LOCK VERIFIED..."
-      ];
-
-      window.LEVELS.forEach((level) => {
-        const locked = level.id > levelUnlocked;
-
-        const node = document.createElement("div");
-        node.className = "level-node" + (locked ? " locked" : "");
-        node.dataset.levelId = level.id;
-
-        node.innerHTML = `
-          <div class="level-dot"></div>
-          <div class="level-header">
-            <div class="level-left">
-              <div class="level-id">LEVEL ${String(level.id).padStart(2,"0")}</div>
-              <div class="level-name">${level.name || ("Link " + level.id)}</div>
-            </div>
-            <div class="level-stats">
-              HP ${level.discipleMaxHP || 500}<br/>
-              MOVES ${level.moves || 20}
-            </div>
-          </div>
-          <div class="level-desc">${level.desc || "Primordial breach detected."}</div>
-        `;
-
-        if (!locked) {
-          node.addEventListener("click", () => {
-            const overlay = document.getElementById("link-overlay");
-            const text = document.getElementById("link-overlay-text");
-            text.textContent = bootPhrases[Math.floor(Math.random() * bootPhrases.length)];
-            overlay.classList.add("active");
-            setTimeout(() => {
-              // IMPORTANT: launch the monolithic build
-              window.location.href = `game_fixed.html?level=${level.id}`;
-            }, 900);
-          });
-        }
-
-        wrapper.appendChild(node);
-      });
-    }
-
-    // If levels.js fails to load, the window.LEVELS will be missing.
-    // We render after DOM is ready so Tailwind has applied, and after a tick so levels.js can execute.
-    window.addEventListener("DOMContentLoaded", () => {
-      const script = document.getElementById("levels-script");
-
-      // If the script tag encountered a network error, "error" fires.
-      script.addEventListener("error", () => {
-        showError(`
-          Failed to load <code>levels.js</code>.<br/>
-          Check the server logs and make sure you’re serving files from the same directory
-          (e.g. run <code>python server.py</code> in the folder that contains
-          <code>index.html</code>, <code>map.html</code>, <code>levels.js</code>, and <code>game_fixed.html</code>).
-        `);
-      });
-
-      // Try to render soon after load; if LEVELS isn't ready yet, wait a moment and retry once.
-      const tryRender = () => {
-        if (Array.isArray(window.LEVELS) && window.LEVELS.length) {
-          renderMap();
+      function updateHUD() {
+        if(!window.economy) return;
+        economy.regenerateEnergy();
+        document.getElementById("energy-amt").textContent = economy.getEnergy();
+        document.getElementById("prisma-amt").textContent = economy.getPrisma();
+        document.getElementById("aurum-amt").textContent = economy.getAurum();
+        
+        const el = document.getElementById("energy-timer");
+        if(economy.getEnergy() >= economy.maxEnergy) {
+           el.textContent = "MAX";
         } else {
-          // one soft retry
-          setTimeout(() => {
-            if (Array.isArray(window.LEVELS) && window.LEVELS.length) renderMap();
-            else showError(`No levels found in <code>LEVELS</code>. Did you export it in <code>levels.js</code>?`);
-          }, 50);
+           const last = parseInt(localStorage.getItem(economy.LS_KEYS.lastEnergyAt)||Date.now());
+           const next = last + (economy.regenMinutes*60000);
+           const diff = next - Date.now();
+           if(diff <= 0) { economy.regenerateEnergy(); updateHUD(); }
+           else {
+             const m = Math.floor(diff/60000);
+             const s = Math.floor((diff%60000)/1000);
+             el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+           }
         }
-      };
-
-      // Give the external script a tiny tick to execute
-      setTimeout(tryRender, 0);
-    });
-
-    // back to title screen
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("back-btn").addEventListener("click", () => {
-        window.location.href = "index.html";
-      });
-    });
+      }
+      setInterval(updateHUD, 1000);
+      updateHUD();
+    })();
   </script>
-
-  <!-- Transition overlay -->
-  <div id="link-overlay">
-    <div id="link-overlay-text">ESTABLISHING LINK...</div>
-  </div>
 </body>
 </html>

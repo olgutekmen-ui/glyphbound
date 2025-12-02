@@ -1,106 +1,187 @@
-// economy.js
-// Lightweight economy layer: Prisma + Energy with localStorage persistence.
+/* economy.js — V1.3 (INVENTORY SYSTEM) */
+(function () {
+  const LS = {
+    energy: "nx_energy",
+    lastEnergyAt: "nx_last_energy_timestamp",
+    prisma: "nx_prisma",
+    aurum: "nx_aurum",
+    lastLogin: "nx_last_login_date",
+    // NEW INVENTORY KEYS
+    itemBomb: "nx_item_bomb",
+    itemHourglass: "nx_item_hourglass",
+    itemAntidote: "nx_item_antidote"
+  };
 
-const LS_KEYS = {
-  prisma: "glp_prisma",
-  energy: "glp_energy",
-  lastEnergyAt: "glp_energy_last_ts",
-  unlock: "glp_level_unlocked" // Optional: future use
-};
+  const economy = {
+    maxEnergy: 10,       
+    regenMinutes: 6,     
+    levelCost: 1,
+    
+    // COSTS
+    prismaToEnergyCost: 50,
+    aurumToPrismaRate: 100,
+    
+    // ITEM COSTS
+    costBomb: 30,      // Prisma
+    costHourglass: 40, // Prisma
+    costAntidote: 20,  // Prisma
 
-const DEFAULTS = {
-  prisma: 0,
-  energy: 10,           // starting energy
-  maxEnergy: 10,        // cap
-  regenMinutes: 20      // 1 energy / 20 minutes (tune later)
-};
+    adWatchReward: 3,
+    dailyLoginAurum: 3,
 
-function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+    LS_KEYS: LS,
 
-export const economy = {
-  prisma: DEFAULTS.prisma,
-  energy: DEFAULTS.energy,
-  maxEnergy: DEFAULTS.maxEnergy,
-  regenMinutes: DEFAULTS.regenMinutes,
+    // --- GETTERS ---
+    getEnergy() { return parseInt(localStorage.getItem(LS.energy) || "10", 10); },
+    getPrisma() { return parseInt(localStorage.getItem(LS.prisma) || "0", 10); },
+    getAurum() { return parseInt(localStorage.getItem(LS.aurum) || "0", 10); },
+    
+    getItemCount(type) {
+        if(type === 'bomb') return parseInt(localStorage.getItem(LS.itemBomb) || "0", 10);
+        if(type === 'hourglass') return parseInt(localStorage.getItem(LS.itemHourglass) || "0", 10);
+        if(type === 'antidote') return parseInt(localStorage.getItem(LS.itemAntidote) || "0", 10);
+        return 0;
+    },
 
-  init() {
-    try {
-      const p = parseInt(localStorage.getItem(LS_KEYS.prisma) || `${DEFAULTS.prisma}`, 10);
-      const e = parseInt(localStorage.getItem(LS_KEYS.energy) || `${DEFAULTS.energy}`, 10);
-      const last = parseInt(localStorage.getItem(LS_KEYS.lastEnergyAt) || "0", 10);
+    // --- SETTERS ---
+    setEnergy(n) {
+      const val = Math.max(0, Math.min(this.maxEnergy, n));
+      localStorage.setItem(LS.energy, String(val));
+      if (val >= this.maxEnergy) localStorage.setItem(LS.lastEnergyAt, String(Date.now()));
+    },
 
-      this.prisma = isNaN(p) ? DEFAULTS.prisma : p;
-      this.energy = isNaN(e) ? DEFAULTS.energy : e;
+    addItem(type, n) {
+        const current = this.getItemCount(type);
+        const key = type === 'bomb' ? LS.itemBomb : type === 'hourglass' ? LS.itemHourglass : LS.itemAntidote;
+        localStorage.setItem(key, String(current + n));
+    },
 
-      // Regen tick
-      this._tickRegen(last);
+    useItem(type) {
+        const current = this.getItemCount(type);
+        if (current > 0) {
+            const key = type === 'bomb' ? LS.itemBomb : type === 'hourglass' ? LS.itemHourglass : LS.itemAntidote;
+            localStorage.setItem(key, String(current - 1));
+            return true;
+        }
+        return false;
+    },
 
-      this._save();
-      // Expose globally for legacy calls and UI
-      window.economy = this;
-      // Initial HUD sync (if shop_ui loaded)
-      if (window.updatePrismaUI) window.updatePrismaUI();
-    } catch (err) {
-      console.warn("[economy] init failed:", err);
-      window.economy = this; // still expose
+    // --- CORE ACTIONS ---
+    addPrisma(n) { localStorage.setItem(LS.prisma, String(this.getPrisma() + n)); },
+    addAurum(n) { localStorage.setItem(LS.aurum, String(this.getAurum() + n)); },
+
+    addEnergy(n) {
+      const e = this.getEnergy();
+      const newVal = Math.min(this.maxEnergy, e + n);
+      this.setEnergy(newVal);
+    },
+
+    spendPrisma(n) {
+      const cur = this.getPrisma();
+      if (cur < n) return false;
+      localStorage.setItem(LS.prisma, String(cur - n));
+      return true;
+    },
+
+    spendAurum(n) {
+      const cur = this.getAurum();
+      if (cur < n) return false;
+      localStorage.setItem(LS.aurum, String(cur - n));
+      return true;
+    },
+
+    spendEnergyForLevel() {
+      this.regenerateEnergy(); 
+      const e = this.getEnergy();
+      if (e < this.levelCost) return false;
+      this.setEnergy(e - this.levelCost);
+      return true;
+    },
+
+    // --- SHOP ACTIONS ---
+    buyItem(type) {
+        let cost = 0;
+        if(type === 'bomb') cost = this.costBomb;
+        if(type === 'hourglass') cost = this.costHourglass;
+        if(type === 'antidote') cost = this.costAntidote;
+
+        if (this.spendPrisma(cost)) {
+            this.addItem(type, 1);
+            return true;
+        }
+        return false;
+    },
+
+    buyEnergyWithPrisma() {
+      if (this.getEnergy() >= this.maxEnergy) return false;
+      if (this.spendPrisma(this.prismaToEnergyCost)) {
+        this.addEnergy(1);
+        return true;
+      }
+      return false;
+    },
+
+    watchAdForEnergy() {
+      if (this.getEnergy() >= this.maxEnergy) return false;
+      this.addEnergy(this.adWatchReward);
+      return true;
+    },
+
+    exchangeAurumToPrisma() {
+      if (this.spendAurum(1)) {
+        this.addPrisma(this.aurumToPrismaRate);
+        return true;
+      }
+      return false;
+    },
+
+    // --- INIT & REGEN ---
+    init() {
+      if (!localStorage.getItem(LS.energy)) localStorage.setItem(LS.energy, String(this.maxEnergy));
+      if (!localStorage.getItem(LS.prisma)) localStorage.setItem(LS.prisma, "100");
+      if (!localStorage.getItem(LS.aurum))  localStorage.setItem(LS.aurum, "0");
+      if (!localStorage.getItem(LS.lastEnergyAt)) localStorage.setItem(LS.lastEnergyAt, String(Date.now()));
+      
+      // Init items if missing
+      if (!localStorage.getItem(LS.itemBomb)) localStorage.setItem(LS.itemBomb, "1"); // Give 1 free
+      if (!localStorage.getItem(LS.itemHourglass)) localStorage.setItem(LS.itemHourglass, "1");
+      if (!localStorage.getItem(LS.itemAntidote)) localStorage.setItem(LS.itemAntidote, "1");
+
+      this.regenerateEnergy();
+      this.checkDailyLogin();
+    },
+
+    regenerateEnergy() {
+      let cur = this.getEnergy();
+      if (cur >= this.maxEnergy) {
+        localStorage.setItem(LS.lastEnergyAt, String(Date.now()));
+        return;
+      }
+      const last = parseInt(localStorage.getItem(LS.lastEnergyAt) || "0", 10);
+      const now = Date.now();
+      const diff = now - last;
+      const msPerEnergy = this.regenMinutes * 60 * 1000;
+
+      if (diff >= msPerEnergy) {
+        const gained = Math.floor(diff / msPerEnergy);
+        const newTotal = Math.min(this.maxEnergy, cur + gained);
+        this.setEnergy(newTotal);
+        const remainder = diff % msPerEnergy;
+        localStorage.setItem(LS.lastEnergyAt, String(now - remainder));
+      }
+    },
+
+    checkDailyLogin() {
+      const lastDate = localStorage.getItem(LS.lastLogin);
+      const today = new Date().toDateString();
+      if (lastDate !== today) {
+        this.addAurum(this.dailyLoginAurum);
+        localStorage.setItem(LS.lastLogin, today);
+        setTimeout(() => { if(window.alert) alert(`DAILY LOGIN: +${this.dailyLoginAurum} Aurum!`); }, 500);
+      }
     }
-  },
+  };
 
-  _tickRegen(lastTs) {
-    if (!lastTs) return this._stamp();
-    const now = Date.now();
-    const diffMin = Math.floor((now - lastTs) / 60000);
-    if (diffMin <= 0) return;
-    const gained = Math.floor(diffMin / this.regenMinutes);
-    if (gained > 0) {
-      this.energy = clamp(this.energy + gained, 0, this.maxEnergy);
-      // move forward the last timestamp by used chunks
-      const usedMs = gained * this.regenMinutes * 60000;
-      const newLast = lastTs + usedMs;
-      localStorage.setItem(LS_KEYS.lastEnergyAt, `${newLast}`);
-    }
-  },
-
-  _stamp() {
-    localStorage.setItem(LS_KEYS.lastEnergyAt, `${Date.now()}`);
-  },
-
-  _save() {
-    localStorage.setItem(LS_KEYS.prisma, `${this.prisma}`);
-    localStorage.setItem(LS_KEYS.energy, `${this.energy}`);
-  },
-
-  addPrisma(n) {
-    this.prisma = Math.max(0, this.prisma + (n | 0));
-    this._save();
-    if (window.updatePrismaUI) window.updatePrismaUI();
-    return this.prisma;
-  },
-
-  spendPrisma(n) {
-    n = n | 0;
-    if (n <= 0) return true;
-    if (this.prisma < n) return false;
-    this.prisma -= n;
-    this._save();
-    if (window.updatePrismaUI) window.updatePrismaUI();
-    return true;
-  },
-
-  getPrisma() { return this.prisma; },
-
-  getEnergy() { return this.energy; },
-
-  consumeEnergy(n = 1) {
-    if (this.energy < n) return false;
-    this.energy -= n;
-    this._save();
-    return true;
-  },
-
-  grantEnergy(n = 1) {
-    this.energy = clamp(this.energy + n, 0, this.maxEnergy);
-    this._save();
-    return this.energy;
-  }
-};
+  window.economy = economy;
+  economy.init();
+})();

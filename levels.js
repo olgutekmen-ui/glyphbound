@@ -1,48 +1,64 @@
-// levels.js — works for both classic <script> and "import './levels.js'"
-// IMPORTANT: no top-level `export` here.
+/* levels.js — V1.5 (HIERARCHY REBALANCE) */
+(function () {
+  // DISCIPLE HIERARCHY (Low to High Strength):
+  // 1. WAR (Weakest) -> 2. DECEIT -> 3. PLAGUE -> 4. GREED (Strongest)
+  
+  const DISCIPLES = {
+    WAR:    { id: "WAR",    name: "WAR",    attack: "drain"  }, 
+    DECEIT: { id: "DECEIT", name: "DECEIT", attack: "deceit" },
+    PLAGUE: { id: "PLAGUE", name: "PLAGUE", attack: "poison" }, 
+    GREED:  { id: "GREED",  name: "GREED",  attack: "greed"  }
+  };
 
-(function (global) {
-  const L = (id, cfg) => ({
-    id,
-    name: cfg.name,
-    desc: cfg.desc,
-    moves: cfg.moves,
-    discipleMaxHP: cfg.discipleMaxHP,
-    discipleAttackRate: cfg.discipleAttackRate ?? 4,
-    encounterPattern: cfg.encounterPattern ?? "drainCharge", // or "drainMove"
-    frozenGoal: cfg.frozenGoal ?? 0,
-    shield: cfg.shield ?? null, // { enabled, breakerHero, hp, thresholdPct }
-    damageBuffs: cfg.damageBuffs ?? null,
-    rewards: cfg.rewards ?? { prisma: 25, unlockNext: true },
-  });
-
-  const LEVELS = [
-    L(1,  { name: "Seoul – Breach Alpha", desc: "First resonance spike.", moves: 20, discipleMaxHP: 500 }),
-    L(2,  { name: "Harbor Node", desc: "Cryo bloom spreading in docks.", moves: 20, discipleMaxHP: 550 }),
-    L(3,  { name: "Old City Ring", desc: "Frozen circuitry blocks links.", moves: 22, discipleMaxHP: 600 }),
-    L(4,  { name: "Atrium Spire", desc: "Phase shield at half HP.", moves: 22, discipleMaxHP: 650,
-            shield: { enabled: true, breakerHero: "vyra", hp: 150, thresholdPct: 50 } }),
-    L(5,  { name: "Neon Bazaar", desc: "Glyph density increasing.", moves: 21, discipleMaxHP: 700 }),
-    L(6,  { name: "Transit Spine", desc: "Faster disciple rhythm.", moves: 23, discipleMaxHP: 760,
-            encounterPattern: "drainMove" }),
-    L(7,  { name: "Cryo Vault", desc: "Shield reappears. Vyra must breach.", moves: 22, discipleMaxHP: 820,
-            shield: { enabled: true, breakerHero: "vyra", hp: 180, thresholdPct: 55 } }),
-    L(8,  { name: "Data Artery", desc: "Resonance bias favors Aelia’s strikes.", moves: 22, discipleMaxHP: 880,
-            damageBuffs: { aelia: 1.2 } }),
-    L(9,  { name: "Temple Verge", desc: "Frozen nodes everywhere. Thaw to stabilize.", moves: 24, discipleMaxHP: 940,
-            frozenGoal: 10 }),
-    L(10, { name: "Primordial Gate", desc: "Final seal—shielded and aggressive.", moves: 24, discipleMaxHP: 1000,
-            encounterPattern: "drainCharge",
-            shield: { enabled: true, breakerHero: "vyra", hp: 220, thresholdPct: 60 },
-            damageBuffs: { aelia: 1.1, vyra: 1.2, iona: 1.05 },
-            rewards: { prisma: 100, unlockNext: false } }),
-  ];
-
-  // Expose globally for classic scripts and for module code that reads window.LEVELS
-  global.LEVELS = LEVELS;
-
-  // Tiny self-check to help debugging
-  if (!Array.isArray(global.LEVELS) || !global.LEVELS.length) {
-    console.error("[levels.js] LEVELS is empty or not an array.");
+  function L(id, name, desc, disciple, moves, hp, rate) {
+    return { id, name, desc, disciple, moves, discipleMaxHP: hp, attackRate: rate };
   }
-})(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : this));
+
+  // Key Milestones
+  const KEY_LEVELS = {
+      // ZONE 1: WAR (The Grunt)
+      1:  L(1,  "Frontline",        "War begins.",           DISCIPLES.WAR,    25, 5000, 3),
+      10: L(10, "The General",      "BOSS: Titan of War.",   DISCIPLES.WAR,    35, 15000, 2),
+      
+      // ZONE 2: DECEIT (The Trickster)
+      11: L(11, "Mirror Maze",      "Illusions forming.",    DISCIPLES.DECEIT, 26, 18000, 3),
+      20: L(20, "The Architect",    "BOSS: Master of Lies.", DISCIPLES.DECEIT, 40, 30000, 2),
+
+      // ZONE 3: PLAGUE (The Corruptor)
+      21: L(21, "Toxic Bloom",      "Infection spreading.",  DISCIPLES.PLAGUE, 26, 35000, 3),
+      30: L(30, "Hive Queen",       "BOSS: Patient Zero.",   DISCIPLES.PLAGUE, 40, 55000, 2),
+
+      // ZONE 4: GREED (The Tyrant)
+      31: L(31, "Golden Cage",      "Avarice takes hold.",   DISCIPLES.GREED,  26, 60000, 3),
+      40: L(40, "The Hoarder",      "BOSS: Data Eater.",     DISCIPLES.GREED,  45, 85000, 2),
+
+      // ZONE 5: THE CORE (All Out War)
+      41: L(41, "The Descent",      "Reality breaking.",     DISCIPLES.WAR,    25, 90000, 2),
+      50: L(50, "OMEGA",            "FINAL BOSS.",           DISCIPLES.GREED,  50, 150000, 2)
+  };
+
+  function getZoneDisciple(lvlId) {
+      if (lvlId <= 10) return DISCIPLES.WAR;    // Zone 1
+      if (lvlId <= 20) return DISCIPLES.DECEIT; // Zone 2
+      if (lvlId <= 30) return DISCIPLES.PLAGUE; // Zone 3
+      if (lvlId <= 40) return DISCIPLES.GREED;  // Zone 4
+      return DISCIPLES.GREED;                   // Zone 5
+  }
+
+  // Generator Loop
+  const FINAL_LEVELS = [];
+  for (let i = 1; i <= 50; i++) {
+      if (KEY_LEVELS[i]) {
+          FINAL_LEVELS.push(KEY_LEVELS[i]);
+      } else {
+          // HP Scaling: Base + Linear Increase
+          let hp = 5000 + ((i - 1) * 2500);
+          if(i > 20) hp += 10000; 
+          if(i > 40) hp += 20000;
+          
+          FINAL_LEVELS.push(L(i, `Sector ${i}`, "System intrusion.", getZoneDisciple(i), 25, hp, 3));
+      }
+  }
+
+  window.LEVELS = FINAL_LEVELS;
+})();
