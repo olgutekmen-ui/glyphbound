@@ -1,9 +1,6 @@
-/* board.js — FINAL STABLE CORE V2.0 */
+/* board.js — FINAL GOLD: STABLE COMBOS & GRAVITY */
 (function () {
   const GS = window.gameState || (window.gameState = {});
-
-  // --- INTERNAL DELAY HELPER (Prevents Dependency Crash) ---
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   // --- HELPERS ---
   function randInt(n) { return Math.floor(Math.random() * n); }
@@ -14,22 +11,17 @@
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
   function isJunk(cell) { return cell && cell.kind === "junk"; }
   function isLava(cell) { return cell && cell.kind === "lava"; }
-  
   function isHazard(cell) { return (isPoison(cell) || isFrozen(cell) || isJunk(cell) || isLava(cell)); }
   function isEmpty(cell) { return cell == null; }
-  
-  // Logic
   function isStatic(cell) { return isHazard(cell); } 
   function canFall(cell) { return isGlyph(cell); }
 
-  // CRITICAL EXPORTS (For Items.js)
-  window.isGlyph = isGlyph; 
-  window.isPoison = isPoison; 
-  window.isFrozen = isFrozen; 
-  window.isJunk = isJunk; 
-  window.isLava = isLava; 
-  window.isEmpty = isEmpty; 
-  window.isHazard = isHazard;
+  // Global Exports
+  window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
+  window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty; window.isHazard = isHazard;
+
+  // --- INTERNAL DELAY ---
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   function initBoard(N) {
     GS.GRID_SIZE = N;
@@ -37,16 +29,13 @@
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
         let t;
-        // Simple prevention of initial matches
         do { t = randInt(4); GS.board[r][c] = makeGlyphCell(t); } 
-        while ( (r>=2 && GS.board[r-1][c].type===t && GS.board[r-2][c].type===t) ||
-                (c>=2 && GS.board[r][c-1].type===t && GS.board[r][c-2].type===t) );
+        while (checkMatchAtOnBoard(GS.board, r, c).length >= 3);
       }
     }
     window.board = GS.board;
   }
 
-  // --- MATCH FINDER ---
   function checkMatchAtOnBoard(bd, r, c) {
     if (!bd || !bd[r] || !bd[r][c]) return []; 
     const cell = bd[r][c];
@@ -82,36 +71,6 @@
     return matches;
   }
 
-  // --- GRAVITY & REFILL ---
-  function applyGravityAndRefill() {
-    const N = GS.GRID_SIZE;
-    // 1. Fall
-    for (let c = 0; c < N; c++) {
-      for (let r = N - 1; r >= 0; r--) {
-        if (GS.board[r][c] === null) {
-          for (let k = r - 1; k >= 0; k--) {
-            const above = GS.board[k][c];
-            if (isStatic(above)) break; // Blocked
-            if (canFall(above)) {
-              GS.board[r][c] = above;
-              GS.board[k][c] = null;
-              break; 
-            }
-          }
-        }
-      }
-    }
-    // 2. Refill Holes
-    for (let c = 0; c < N; c++) {
-       for (let r = 0; r < N; r++) {
-           if (GS.board[r][c] === null) {
-               GS.board[r][c] = makeGlyphCell(randInt(4));
-           }
-       }
-    }
-  }
-
-  // --- CLEANUP ---
   function cleanHazardsAdjacentTo(matches) {
     const N = GS.GRID_SIZE;
     for (const key in matches) {
@@ -124,33 +83,58 @@
     }
   }
 
-  // --- MAIN PROCESS LOOP ---
+  function applyGravityAndRefill() {
+    const N = GS.GRID_SIZE;
+    // 1. Gravity
+    for (let c = 0; c < N; c++) {
+      for (let r = N - 1; r >= 0; r--) {
+        if (GS.board[r][c] === null) {
+          for (let k = r - 1; k >= 0; k--) {
+            const above = GS.board[k][c];
+            if (isStatic(above)) break; 
+            if (canFall(above)) {
+              GS.board[r][c] = above;
+              GS.board[k][c] = null;
+              break; 
+            }
+          }
+        }
+      }
+    }
+    // 2. Refill
+    for (let c = 0; c < N; c++) {
+       for (let r = 0; r < N; r++) {
+           if (GS.board[r][c] === null) {
+               GS.board[r][c] = makeGlyphCell(randInt(4));
+           }
+       }
+    }
+  }
+
   async function processBoardUntilStable() {
     try {
         let stable = false;
-        let safeguard = 0;
+        let loopCount = 0;
         let comboStreak = 0;
 
-        // Loop until NO matches are found
-        while (!stable && safeguard < 30) {
+        // LOOP: Gravity -> Check -> Clear -> Repeat
+        while (!stable && loopCount < 25) {
             
-            // 1. GRAVITY: Fill the board first
+            // 1. Fill Holes First
             applyGravityAndRefill();
-            
-            // 2. RENDER: Show the player the filled board
             if (window.UI && UI.renderBoard) UI.renderBoard();
             
-            // 3. DELAY: Wait for eye to catch up (only if not first frame)
-            if (safeguard > 0) await delay(250);
+            // 2. Visual Delay (To see the drop)
+            if (loopCount > 0) await delay(200);
 
-            // 4. CHECK: Are there matches now?
+            // 3. Find Matches
             const matches = findAllMatches();
             const matchCount = Object.keys(matches).length;
 
             if (matchCount === 0) {
-                stable = true; // EXIT CONDITION
+                stable = true; // EXIT
             } else {
-                stable = false; // KEEP GOING
+                stable = false; // CONTINUE
                 
                 // Audio
                 try { if(window.AudioSys && AudioSys.play) AudioSys.play('match'); } catch(e){}
@@ -167,30 +151,28 @@
                 if (window.Abilities && window.Abilities.applyHeroDamage) {
                     const baseDmg = 25;
                     const multiplier = 1 + (comboStreak * 0.1); 
-                    const dmg = Math.floor((matchCount / 3) * baseDmg * multiplier);
+                    const totalDmg = Math.floor(matchCount * baseDmg * multiplier);
                     
-                    window.Abilities.applyHeroDamage("board", dmg);
+                    window.Abilities.applyHeroDamage("board", totalDmg);
                     
                     if (window.FX) {
-                        FX.showDamage(dmg);
-                        // Safely check if showCombo exists
+                        FX.showDamage(totalDmg);
+                        // SAFELY CALL COMBO
                         if (comboStreak > 0 && FX.showCombo) FX.showCombo(comboStreak + 1);
                     }
 
-                    // Charge Heroes
                     GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));
                     GS.noctaCharge = Math.min(12, GS.noctaCharge + 1);
                     GS.vyraCharge = Math.min(15, GS.vyraCharge + 1);
                     GS.ionaCharge = Math.min(18, GS.ionaCharge + 1);
                 }
 
-                // Destroy Data
+                // Destroy
                 cleanHazardsAdjacentTo(matches);
                 for (const key in matches) { const { r, c } = matches[key]; GS.board[r][c] = null; }
 
-                // Loop repeats -> Gravity will fill these holes -> Check again
                 comboStreak++;
-                safeguard++;
+                loopCount++;
             }
         }
 
@@ -198,7 +180,6 @@
         if(window.spreadPoison) window.spreadPoison(); else spreadPoisonLocal();
         if(window.spreadLava) window.spreadLava(); else spreadLavaLocal();
         
-        // Final Render
         if (window.UI && UI.renderBoard) UI.renderBoard();
 
     } catch (err) {
@@ -207,7 +188,6 @@
     }
   }
 
-  // Hazard Logic
   function spreadPoisonLocal() {
     const N = GS.GRID_SIZE; const p=[]; for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(isPoison(GS.board[r][c]))p.push({r,c});
     if(p.length){ const s=p[randInt(p.length)]; const g=[[s.r-1,s.c],[s.r+1,s.c],[s.r,s.c-1],[s.r,s.c+1]].filter(([r,c])=>r>=0&&r<N&&c>=0&&c<N&&isGlyph(GS.board[r][c])); if(g.length){const[rr,cc]=g[randInt(g.length)];GS.board[rr][cc]={kind:"poison"}} }

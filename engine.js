@@ -1,26 +1,18 @@
-/* engine.js — V1.10 (REVIVE & TIMER LOGIC) */
+/* engine.js — FINAL GOLD MASTER */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
   let timerInterval = null;
-  let defeatReason = 'moves'; // Default
+  let defeatReason = 'moves';
 
-  // --- TIMER LOGIC ---
+  // --- TIMER ---
   function startLevelTimer() {
       if (timerInterval) clearInterval(timerInterval);
-      
-      // Reset Time for Level
-      // Default to 120s if level data missing
       GS.timeLeft = (GS.activeLevel && GS.activeLevel.time) ? GS.activeLevel.time : 120; 
-      
       timerInterval = setInterval(() => {
-          // PAUSE if animating (warning) or game over
           if (GS.isProcessing || GS.victoryTriggered) return;
-          
           GS.timeLeft--;
-          
           if (window.UI && UI.updateStats) UI.updateStats();
-          
           if (GS.timeLeft <= 0) {
               clearInterval(timerInterval);
               handleDefeat('time');
@@ -33,9 +25,9 @@
     if(!c.length)return null; return c[Math.floor(Math.random()*c.length)];
   }
 
-  function performDiscipleAttack(type) {
+  function performDiscipleAttack(type, forcedTarget) {
     if(window.AudioSys) AudioSys.play('warning');
-    const target = getSafeRandomGlyph();
+    const target = forcedTarget || getSafeRandomGlyph();
     if(target) {
         if (window.FX && FX.shake) FX.shake(1);
         const {r, c} = target;
@@ -50,36 +42,26 @@
   function discipleAttackIfReady() {
     if (!GS.disciple || GS.discipleHP <= 0) return;
     const every = GS.discipleAttackRate || 3; 
-    
     if (GS.turnsTaken > 0 && GS.turnsTaken % every === 0) {
-        // PAUSE GAME & TIMER
         GS.isProcessing = true; 
-
-        // 1. Target & Glow
         const target = getSafeRandomGlyph();
-        if(target && window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, true);
-
-        // 2. Warning
-        if (window.UI && UI.flashAlert) UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 1200);
-        
-        // 3. Strike after delay
-        setTimeout(() => { 
-            if(target && window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, false);
-            performDiscipleAttack(GS.disciple.attack || "greed"); 
-            
-            // UNPAUSE
-            GS.isProcessing = false;
-        }, 1000); 
+        if (target) {
+            if (window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, true);
+            if (window.UI && UI.flashAlert) UI.flashAlert(`WARNING: ${GS.disciple.name} ATTACK!`, 1000);
+            setTimeout(() => { 
+                if (window.UI && UI.highlightTile) UI.highlightTile(target.r, target.c, false);
+                performDiscipleAttack(GS.disciple.attack || "greed", target); 
+                GS.isProcessing = false;
+            }, 1000); 
+        } else { GS.isProcessing = false; }
     }
   }
 
-  // --- VICTORY ---
   async function handleVictory() {
     if (GS.victoryTriggered) return; 
     GS.victoryTriggered = true;
     GS.isProcessing = true; 
     if(timerInterval) clearInterval(timerInterval);
-    
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
 
     const reward = 20 + (GS.movesLeft * 2);
@@ -88,65 +70,37 @@
 
     const msgEl = document.getElementById("end-message");
     const btnNext = document.getElementById("btn-next-level");
-    // Hide Revive Button if it exists from a previous loss
     const btnRevive = document.getElementById("btn-revive");
     if(btnRevive) btnRevive.style.display = "none";
 
     if (msgEl) { msgEl.textContent = `VICTORY! +${reward} Prisma`; msgEl.className = "victory-title"; }
-    
     if (btnNext) {
         const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === GS.currentLevelId + 1);
         if (nextLevelExists) {
             btnNext.style.display = "block";
-            btnNext.onclick = () => {
-                if (window.economy && window.economy.spendEnergyForLevel()) {
-                    window.location.href = `game.html?level=${GS.currentLevelId+1}`;
-                } else {
-                    if(confirm("Not enough Energy! Go to Shop?")) window.location.href = "shop.html";
-                }
-            };
-        } else {
-            btnNext.style.display = "none"; 
-            if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!";
-        }
+            btnNext.onclick = () => { if (window.economy && window.economy.spendEnergyForLevel()) window.location.href = `game.html?level=${GS.currentLevelId+1}`; else if(confirm("Not enough Energy!")) window.location.href = "shop.html"; };
+        } else { btnNext.style.display = "none"; if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!"; }
     }
-    
     const hId = ({GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"})[GS.disciple?.id] || "aelia";
     const imgEl = document.getElementById("end-chibi");
     if (imgEl) imgEl.src = `assets/${hId}_wink.png`;
     document.getElementById("end-overlay").style.display = "flex";
   }
 
-  // --- DEFEAT & REVIVE ---
   function handleDefeat(reason) {
     if (GS.victoryTriggered) return;
     GS.victoryTriggered = true;
     GS.isProcessing = true;
-    defeatReason = reason || 'moves'; // 'time' or 'moves'
-    
+    defeatReason = reason || 'moves'; 
     if(timerInterval) clearInterval(timerInterval);
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
 
     const msgEl = document.getElementById("end-message");
-    const btnNext = document.getElementById("btn-next-level");
-    
-    if (msgEl) { 
-        // EXPLICIT REASON
-        msgEl.textContent = defeatReason === 'time' ? "OUT OF TIME" : "OUT OF MOVES"; 
-        msgEl.className = "defeat-title"; 
-    }
-    if(btnNext) btnNext.style.display = "none";
-
-    // Show Disciple
+    if (msgEl) { msgEl.textContent = defeatReason === 'time' ? "OUT OF TIME" : "OUT OF MOVES"; msgEl.className = "defeat-title"; }
+    document.getElementById("btn-next-level").style.display = "none";
     const imgEl = document.getElementById("end-chibi");
-    if (imgEl && GS.disciple) {
-        imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`;
-        imgEl.onerror = function() { this.src = "assets/tile_greed.png"; };
-    }
-
-    // INJECT REVIVE BUTTON
+    if (imgEl && GS.disciple) { imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`; imgEl.onerror = function() { this.src = "assets/tile_greed.png"; }; }
     injectReviveButton();
-
     document.getElementById("end-overlay").style.display = "flex";
   }
 
@@ -154,54 +108,31 @@
       let btn = document.getElementById("btn-revive");
       const box = document.getElementById("end-box");
       const playAgain = document.getElementById("btn-play-again");
-      
       if (!btn) {
           btn = document.createElement("button");
           btn.id = "btn-revive";
-          // Premium Look
           btn.style.cssText = "width:100%; padding:12px; margin-bottom:8px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #d946ef); color:#fff; border:1px solid #c084fc; cursor:pointer; font-weight:900; letter-spacing:1px; text-transform:uppercase; box-shadow:0 0 15px rgba(217, 70, 239, 0.4);";
           if(box && playAgain) box.insertBefore(btn, playAgain);
       }
-
       const cost = 50;
       const benefit = defeatReason === 'time' ? "+15 SECONDS" : "+5 MOVES";
       btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">💎 ${cost} PRISMA</span>`;
       btn.style.display = "block";
-      
       btn.onclick = () => attemptRevive(cost);
   }
 
   function attemptRevive(cost) {
       if (window.economy && economy.spendPrisma(cost)) {
-          // Apply Benefit
-          if (defeatReason === 'time') {
-              GS.timeLeft += 15;
-              startLevelTimer(); // Restart clock
-          } else {
-              GS.movesLeft += 5;
-              if(window.UI && UI.updateStats) UI.updateStats();
-          }
-
-          // Unlock State
+          if (defeatReason === 'time') { GS.timeLeft += 15; startLevelTimer(); } else { GS.movesLeft += 5; if(window.UI && UI.updateStats) UI.updateStats(); }
           GS.victoryTriggered = false;
           GS.isProcessing = false;
           defeatReason = null;
-
-          // Hide Overlay
           document.getElementById("end-overlay").style.display = "none";
-          
-          // Resume Music
           if(window.AudioSys) AudioSys.playBGM('bgm_battle');
-          
-          // Feedback
           if(window.UI && UI.flashAlert) UI.flashAlert("SYSTEM RESTORED!", 1000);
-
-      } else {
-          alert(`Insufficient Prisma! Needed: ${cost}`);
-      }
+      } else { alert(`Insufficient Prisma! Needed: ${cost}`); }
   }
 
-  // --- CORE LOOP ---
   async function trySwap(r1, c1, r2, c2) {
     if (GS.isProcessing || GS.movesLeft <= 0 || GS.timeLeft <= 0 || GS.victoryTriggered) return false;
     try {
@@ -214,14 +145,9 @@
             GS.movesLeft--;
             GS.turnsTaken++;
             if (window.UI) { UI.updateStats(); UI.updateAbilityUI(); }
-
             if (GS.discipleHP <= 0) { await handleVictory(); return true; } 
-
-            // Check defeat (Moves)
             if (GS.movesLeft <= 0) { handleDefeat('moves'); return true; }
-            
             discipleAttackIfReady();
-            
             return true;
         } 
     } catch(err) { console.error(err); } finally {
@@ -242,40 +168,29 @@
       }
   }
 
-  function bootLevel(lvlId) {
+  async function bootLevel(lvlId) {
     const id = typeof lvlId === 'number' ? lvlId : window.readLevelIdFromURL();
     const lvl = (window.LEVELS || []).find((L) => L.id === id) || window.LEVELS[0];
-
     GS.currentLevelId = id;
     GS.activeLevel = lvl;
     GS.disciple = lvl.disciple;
     GS.discipleMaxHP = lvl.discipleMaxHP || 800;
     GS.discipleHP = GS.discipleMaxHP;
     GS.discipleAttackRate = lvl.attackRate || 3; 
-
     GS.GRID_SIZE = 9;
     GS.movesLeft = lvl.moves || 25;
     GS.score = 0;
     GS.turnsTaken = 0;
     GS.aeliaCharge=0; GS.noctaCharge=0; GS.vyraCharge=0; GS.ionaCharge=0;
-    
     GS.isProcessing = false;
     GS.victoryTriggered = false;
-    GS.timeLeft = 0; // Reset before starting timer
-
+    GS.timeLeft = 0; 
     if(window.AudioSys) AudioSys.playBGM('bgm_battle');
-
     if (window.Board?.initBoard) {
         Board.initBoard(GS.GRID_SIZE);
-        if(Board.processBoardUntilStable) Board.processBoardUntilStable();
+        if(Board.processBoardUntilStable) await Board.processBoardUntilStable();
     }
-    
-    if (window.UI) {
-      UI.renderBoard(); UI.updateStats(); UI.updateDiscipleBadge();
-      UI.updateChibiUI(); UI.updateAbilityUI();
-    }
-    
-    // START CLOCK
+    if (window.UI) { UI.renderBoard(); UI.updateStats(); UI.updateDiscipleBadge(); UI.updateChibiUI(); UI.updateAbilityUI(); }
     startLevelTimer();
   }
 
