@@ -1,23 +1,19 @@
-/* fx.js — V1.5 (COMBO VISUALS RESTORED) */
+/* fx.js — FINAL: PARTICLES, SHAKE, COMBO */
 (function() {
     const FX = {
         COLORS: ['#38bdf8', '#22d3ee', '#f472b6', '#4ade80'],
         
         init() { }, 
 
-        // --- COMBO VISUAL (This was missing!) ---
+        // --- COMBO VISUAL (RESTORED) ---
         showCombo(count) {
-            // 1. Debug log to prove it runs
-            console.log(`COMBO x${count} TRIGGERED!`);
-
-            // 2. Remove old text to prevent overlap
+            console.log(`COMBO x${count}!`); // Debug
+            
             const existing = document.getElementById("active-combo-text");
             if(existing) existing.remove();
 
-            // 3. Minimum combo to show is 2
             if (count < 2) return;
 
-            // 4. Create Element
             const el = document.createElement("div");
             el.id = "active-combo-text";
             el.className = "combo-text";
@@ -25,7 +21,6 @@
             
             document.body.appendChild(el);
 
-            // 5. Auto-remove after animation (1.2s)
             setTimeout(() => {
                 if (document.body.contains(el)) el.remove();
             }, 1200);
@@ -34,15 +29,10 @@
         shake(intensity = 1) {
             const root = document.getElementById("game-root");
             if (!root) return;
-            
             root.classList.remove("shake-small", "shake-big");
-            
-            // Trigger reflow
             void root.offsetWidth;
-            
             const cls = intensity > 1 ? "shake-big" : "shake-small";
             root.classList.add(cls);
-            
             setTimeout(() => root.classList.remove(cls), 500);
         },
 
@@ -61,7 +51,6 @@
             
             const rect = hud.getBoundingClientRect();
             const randX = (Math.random() * 40) - 20;
-            
             el.style.left = (rect.left + rect.width/2 + randX) + "px";
             el.style.top = rect.top + "px";
             
@@ -90,15 +79,12 @@
             p.style.backgroundColor = color;
             p.style.left = x + "px";
             p.style.top = y + "px";
-            
             const angle = Math.random() * Math.PI * 2;
             const velocity = Math.random() * 60 + 20; 
             const tx = Math.cos(angle) * velocity;
             const ty = Math.sin(angle) * velocity;
-            
             p.style.setProperty('--tx', `${tx}px`);
             p.style.setProperty('--ty', `${ty}px`);
-            
             document.body.appendChild(p);
             setTimeout(() => p.remove(), 600);
         }

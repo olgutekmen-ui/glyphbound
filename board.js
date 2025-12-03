@@ -1,11 +1,11 @@
-/* board.js — FINAL GOLD: STABLE COMBOS & GRAVITY */
+/* board.js — FINAL GOLD: STABLE COMBOS */
 (function () {
   const GS = window.gameState || (window.gameState = {});
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   // --- HELPERS ---
   function randInt(n) { return Math.floor(Math.random() * n); }
   function makeGlyphCell(type) { return { kind: "glyph", type }; }
-  
   function isGlyph(cell) { return cell && cell.kind === "glyph"; }
   function isPoison(cell) { return cell && cell.kind === "poison"; }
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
@@ -16,12 +16,9 @@
   function isStatic(cell) { return isHazard(cell); } 
   function canFall(cell) { return isGlyph(cell); }
 
-  // Global Exports
+  // EXPORTS
   window.isGlyph = isGlyph; window.isPoison = isPoison; window.isFrozen = isFrozen;
   window.isJunk = isJunk; window.isLava = isLava; window.isEmpty = isEmpty; window.isHazard = isHazard;
-
-  // --- INTERNAL DELAY ---
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
   function initBoard(N) {
     GS.GRID_SIZE = N;
@@ -43,17 +40,14 @@
     const t = cell.type;
     const N = bd.length;
     let out = [];
-    
     let temp = [{ r, c }];
     let x = c - 1; while (x >= 0 && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x--; }
     x = c + 1; while (x < N && bd[r][x] && isGlyph(bd[r][x]) && bd[r][x].type === t) { temp.push({ r, c: x }); x++; }
     if (temp.length >= 3) out = out.concat(temp);
-
     temp = [{ r, c }];
     let y = r - 1; while (y >= 0 && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y--; }
     y = r + 1; while (y < N && bd[y] && isGlyph(bd[y][c]) && bd[y][c].type === t) { temp.push({ r: y, c }); y++; }
     if (temp.length >= 3) out = out.concat(temp);
-
     return out;
   }
 
@@ -85,7 +79,6 @@
 
   function applyGravityAndRefill() {
     const N = GS.GRID_SIZE;
-    // 1. Gravity
     for (let c = 0; c < N; c++) {
       for (let r = N - 1; r >= 0; r--) {
         if (GS.board[r][c] === null) {
@@ -101,7 +94,6 @@
         }
       }
     }
-    // 2. Refill
     for (let c = 0; c < N; c++) {
        for (let r = 0; r < N; r++) {
            if (GS.board[r][c] === null) {
@@ -117,29 +109,22 @@
         let loopCount = 0;
         let comboStreak = 0;
 
-        // LOOP: Gravity -> Check -> Clear -> Repeat
         while (!stable && loopCount < 25) {
-            
-            // 1. Fill Holes First
             applyGravityAndRefill();
             if (window.UI && UI.renderBoard) UI.renderBoard();
             
-            // 2. Visual Delay (To see the drop)
             if (loopCount > 0) await delay(200);
 
-            // 3. Find Matches
             const matches = findAllMatches();
             const matchCount = Object.keys(matches).length;
 
             if (matchCount === 0) {
-                stable = true; // EXIT
+                stable = true;
             } else {
-                stable = false; // CONTINUE
+                stable = false;
                 
-                // Audio
                 try { if(window.AudioSys && AudioSys.play) AudioSys.play('match'); } catch(e){}
 
-                // FX
                 if (window.FX && FX.explode) {
                     for (const key in matches) {
                         const { r, c } = matches[key];
@@ -147,7 +132,6 @@
                     }
                 }
 
-                // Damage
                 if (window.Abilities && window.Abilities.applyHeroDamage) {
                     const baseDmg = 25;
                     const multiplier = 1 + (comboStreak * 0.1); 
@@ -155,10 +139,10 @@
                     
                     window.Abilities.applyHeroDamage("board", totalDmg);
                     
+                    // CALL COMBO VISUAL
                     if (window.FX) {
                         FX.showDamage(totalDmg);
-                        // SAFELY CALL COMBO
-                        if (comboStreak > 0 && FX.showCombo) FX.showCombo(comboStreak + 1);
+                        if(comboStreak > 0 && FX.showCombo) FX.showCombo(comboStreak + 1);
                     }
 
                     GS.aeliaCharge = Math.min(10, GS.aeliaCharge + (matchCount > 3 ? 2 : 1));
@@ -167,7 +151,6 @@
                     GS.ionaCharge = Math.min(18, GS.ionaCharge + 1);
                 }
 
-                // Destroy
                 cleanHazardsAdjacentTo(matches);
                 for (const key in matches) { const { r, c } = matches[key]; GS.board[r][c] = null; }
 
@@ -176,7 +159,6 @@
             }
         }
 
-        // End of Turn Hazards
         if(window.spreadPoison) window.spreadPoison(); else spreadPoisonLocal();
         if(window.spreadLava) window.spreadLava(); else spreadLavaLocal();
         
