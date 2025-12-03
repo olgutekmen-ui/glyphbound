@@ -1,4 +1,4 @@
-/* style.css — FINAL MASTER (INCLUDES COMBO TEXT) */
+/* style.css — FINAL MASTER (INCLUDES COMBO TEXT & ALL FX) */
 
 /* ============================================================
     GLOBAL PAGE BASE
@@ -233,7 +233,7 @@ img { max-width: 100%; display: block; }
 .chibiFrame img { width: 100%; height: 100%; object-fit: contain; }
 #chibi-row { display: flex; justify-content: space-between; padding: 0 1rem; margin-bottom: 0.5rem; }
 
-/* --- BOSS WARNING --- */
+/* --- 1. BOSS ALERT (TOP BANNER) --- */
 #alert-banner {
   position: fixed !important; 
   top: 12% !important; 
@@ -257,31 +257,36 @@ img { max-width: 100%; display: block; }
 .alert-active { display: flex !important; align-items: center; justify-content: center; animation: slideDownWarn 0.3s forwards !important; }
 @keyframes slideDownWarn { from { top: -20%; opacity: 0; } to { top: 12%; opacity: 1; } }
 
-/* --- COMBO TEXT (RESTORED) --- */
+/* --- 2. COMBO TEXT (CENTERED & HUGE) --- */
 .combo-text {
     position: fixed;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    font-size: 4rem !important;
+    font-size: 4.5rem !important;
     font-weight: 900;
     font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(to bottom, #ffffff 0%, #fbbf24 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 5px #000) drop-shadow(0 0 10px #b45309);
+    
+    /* SOLID GOLD COLOR (Max Visibility) */
+    color: #fbbf24 !important;
+    
+    /* THICK OUTLINE */
+    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 20px #b45309;
+    
     z-index: 999999 !important; 
     pointer-events: none;
-    animation: comboPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    animation: comboPop 1.2s ease-out forwards;
 }
 @keyframes comboPop {
     0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    40% { transform: translate(-50%, -50%) scale(1.0); }
     80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
 }
 
-/* --- TARGET RETICLE --- */
+/* --- 3. TARGET RETICLE --- */
 .danger-pulse { position: relative; z-index: 100; }
 .danger-pulse .tile3D {
     animation: targetStrobe 0.2s infinite alternate !important;
