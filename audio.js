@@ -1,4 +1,4 @@
-/* audio.js — V1.2 (PITCH SHIFTING SYNTH) */
+/* audio.js — V2.2 (DETUNE PITCH SYSTEM) */
 (function() {
     const AudioSys = {
         ctx: null,
@@ -13,52 +13,61 @@
             } catch (e) { console.warn("Web Audio API missing"); }
         },
 
-        // --- SYNTHESIS ENGINE ---
-        playTone(freq, type, duration, vol = 0.1, slide = 0) {
+        playTone(freq, type, duration, vol = 0.1, detune = 0) {
             if (this.muted || !this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
+            
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            if (slide !== 0) osc.frequency.exponentialRampToValueAtTime(freq + slide, this.ctx.currentTime + duration);
+            osc.frequency.value = freq;
+            osc.detune.value = detune; 
+            
             gain.gain.setValueAtTime(vol, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
             osc.stop(this.ctx.currentTime + duration);
         },
 
-        // --- PITCH SHIFTING PLAY ---
         play(key, pitchMult = 1.0) {
             if (this.muted || !this.ctx) return;
             if (this.ctx.state === 'suspended') this.ctx.resume();
 
-            // Adjust base frequencies by pitchMult
+            // Convert Multiplier to Cents (100 cents = 1 semitone)
+            // Log2(mult) * 1200
+            const cents = 1200 * Math.log2(Math.max(1, pitchMult));
+
             switch (key) {
                 case 'swap':
-                    this.playTone(800 * pitchMult, 'sine', 0.1, 0.1, -400);
+                    this.playTone(800, 'sine', 0.1, 0.1);
                     break;
                 case 'match':
-                    // Chime scales up with combos
-                    const base = 440 * pitchMult;
-                    this.playTone(base, 'triangle', 0.3, 0.1);
-                    setTimeout(() => this.playTone(base * 1.25, 'triangle', 0.3, 0.1), 50); // Major Third
-                    setTimeout(() => this.playTone(base * 1.5, 'triangle', 0.3, 0.1), 100); // Fifth
+                    // Arpeggio climbs with combo
+                    // Base C Major (C5 approx 523Hz)
+                    const base = 523.25; 
+                    
+                    // Root
+                    this.playTone(base, 'triangle', 0.3, 0.1, cents); 
+                    // Major Third (+400 cents)
+                    setTimeout(() => this.playTone(base, 'triangle', 0.3, 0.1, cents + 400), 60); 
+                    // Perfect Fifth (+700 cents)
+                    setTimeout(() => this.playTone(base, 'triangle', 0.3, 0.1, cents + 700), 120); 
                     break;
                 case 'cast':
-                    this.playTone(200, 'sawtooth', 0.5, 0.1, 800);
+                    this.playTone(200, 'sawtooth', 0.5, 0.1);
                     break;
                 case 'warning':
                     this.playTone(150, 'square', 0.4, 0.15);
                     setTimeout(() => this.playTone(100, 'square', 0.4, 0.15), 200);
                     break;
                 case 'win':
-                    [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.4, 0.1), i * 150));
+                    [0, 400, 700, 1200].forEach((c, i) => setTimeout(() => this.playTone(523.25, 'square', 0.4, 0.1, c), i * 150));
                     break;
                 case 'lose':
-                    this.playTone(150, 'sawtooth', 1.0, 0.2, -50);
-                    this.playTone(145, 'sawtooth', 1.0, 0.2, -50);
+                    this.playTone(150, 'sawtooth', 1.0, 0.2);
+                    setTimeout(() => this.playTone(140, 'sawtooth', 1.0, 0.2), 300);
                     break;
             }
         },

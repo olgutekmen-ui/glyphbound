@@ -1,14 +1,12 @@
-/* fx.js — FINAL: PARTICLES, SHAKE, COMBO */
+/* fx.js — V2.1 (COMBO PULSE REFIX) */
 (function() {
     const FX = {
         COLORS: ['#38bdf8', '#22d3ee', '#f472b6', '#4ade80'],
         
         init() { }, 
 
-        // --- COMBO VISUAL (RESTORED) ---
         showCombo(count) {
-            console.log(`COMBO x${count}!`); // Debug
-            
+            // Force reflow by removing old element immediately
             const existing = document.getElementById("active-combo-text");
             if(existing) existing.remove();
 
@@ -17,9 +15,12 @@
             const el = document.createElement("div");
             el.id = "active-combo-text";
             el.className = "combo-text";
-            el.innerText = `COMBO x${count}!`;
+            el.innerText = `COMBO x${count}! 🔥`;
             
             document.body.appendChild(el);
+
+            // Audio is handled in board.js, but visual shake is here
+            this.shake(Math.min(3, count * 0.5)); 
 
             setTimeout(() => {
                 if (document.body.contains(el)) el.remove();
@@ -30,8 +31,8 @@
             const root = document.getElementById("game-root");
             if (!root) return;
             root.classList.remove("shake-small", "shake-big");
-            void root.offsetWidth;
-            const cls = intensity > 1 ? "shake-big" : "shake-small";
+            void root.offsetWidth; // Force Reflow
+            const cls = intensity > 1.5 ? "shake-big" : "shake-small";
             root.classList.add(cls);
             setTimeout(() => root.classList.remove(cls), 500);
         },

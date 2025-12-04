@@ -1,11 +1,10 @@
-/* engine.js — FINAL GOLD MASTER */
+/* engine.js — V2.1 (QUEST HOOKS) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
   let timerInterval = null;
   let defeatReason = 'moves';
 
-  // --- TIMER ---
   function startLevelTimer() {
       if (timerInterval) clearInterval(timerInterval);
       GS.timeLeft = (GS.activeLevel && GS.activeLevel.time) ? GS.activeLevel.time : 120; 
@@ -63,6 +62,13 @@
     GS.isProcessing = true; 
     if(timerInterval) clearInterval(timerInterval);
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
+
+    // --- QUEST HOOK ---
+    if(window.Quests) {
+        Quests.report('win_level'); // Day 1 & 5
+        Quests.report('kill_boss', GS.currentLevelId); // Day 7
+    }
+    // ------------------
 
     const reward = 20 + (GS.movesLeft * 2);
     if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
@@ -158,7 +164,7 @@
 
   async function requestShuffle() {
       if (GS.isProcessing || GS.victoryTriggered) return;
-      if (GS.movesLeft <= 1) { if(window.UI && UI.flashAlert) UI.flashAlert("NOT ENOUGH MOVES"); return; }
+      if (GS.movesLeft < 1) { if(window.UI && UI.flashAlert) UI.flashAlert("NOT ENOUGH MOVES"); return; }
       if (window.confirm("Shuffle Board? Cost: 1 Move")) {
           GS.isProcessing = true; GS.movesLeft--;
           if (window.UI) UI.updateStats();

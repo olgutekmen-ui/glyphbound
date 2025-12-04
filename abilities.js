@@ -1,10 +1,20 @@
-/* abilities.js — FINAL: INSTANT DAMAGE + FX */
+/* abilities.js — V3.0 (NERFED CHARGE COSTS) */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
-  const delay = (ms) => new Promise(res => setTimeout(res, ms)); // Internal delay helper
+  const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
 
-  // Sync HP
+  // --- CONFIGURABLE COSTS ---
+  // Increased to prevent spamming in early levels
+  const COSTS = {
+      aelia: 20, // Was 10
+      nocta: 25, // Was 12
+      vyra:  30, // Was 15
+      iona:  35  // Was 15
+  };
+  // Expose for UI/Board to see
+  window.ABILITY_COSTS = COSTS;
+
   function updateStatsSync() {
       const hpBar = document.getElementById("disciple-hp-bar");
       const hpLabel = document.getElementById("disciple-hp-label");
@@ -28,7 +38,6 @@
         if (actual > 500) { FX.shake(2); FX.showDamage(actual, true); }
         else { FX.showDamage(actual); }
     }
-    // Sound for abilities
     if (window.AudioSys && sourceHero !== "board") AudioSys.play('cast');
 
     if (GS.discipleHP <= 0) {
@@ -47,7 +56,6 @@
 
   async function clearAndFill(cellsToClear) {
       if (!cellsToClear.length) return;
-      
       cellsToClear.forEach(({ r, c }) => {
         const el = document.getElementById(`cell-${r}-${c}`);
         if (el && el.firstChild) {
@@ -56,16 +64,13 @@
         }
       });
       await delay(150);
-
       cellsToClear.forEach(({ r, c }) => GS.board[r][c] = null);
-      
-      if (window.Board && window.Board.processBoardUntilStable) {
-          await window.Board.processBoardUntilStable();
-      }
+      if (window.Board && window.Board.processBoardUntilStable) await window.Board.processBoardUntilStable();
   }
 
   async function activateAelia() {
-    if (GS.isProcessing || GS.aeliaCharge < 10) return;
+    if (GS.isProcessing || GS.aeliaCharge < COSTS.aelia) return;
+    if(window.Quests) Quests.report('use_ulti'); 
     resetCharge("aelia");
     GS.isProcessing = true;
     try {
@@ -79,7 +84,8 @@
   }
 
   async function activateNocta() {
-    if (GS.isProcessing || GS.noctaCharge < 12) return;
+    if (GS.isProcessing || GS.noctaCharge < COSTS.nocta) return;
+    if(window.Quests) Quests.report('use_ulti'); 
     resetCharge("nocta");
     GS.isProcessing = true;
     try {
@@ -93,7 +99,8 @@
   }
 
   async function activateIona() {
-    if (GS.isProcessing || GS.ionaCharge < 18) return;
+    if (GS.isProcessing || GS.ionaCharge < COSTS.iona) return;
+    if(window.Quests) Quests.report('use_ulti');
     resetCharge("iona");
     GS.isProcessing = true;
     try {
@@ -110,11 +117,12 @@
   }
 
   async function activateVyra() {
-    if (GS.isProcessing || GS.vyraCharge < 15) return;
+    if (GS.isProcessing || GS.vyraCharge < COSTS.vyra) return;
+    if(window.Quests) Quests.report('use_ulti'); 
     resetCharge("vyra");
     GS.isProcessing = true;
     try {
-      const isDead = applyHeroDamage("vyra", 500); 
+      const isDead = applyHeroDamage("vyra", 1000); 
       if (isDead) return;
       const max = GS.GRID_SIZE - 2;
       const r0 = 1 + Math.floor(Math.random() * max);
