@@ -10,7 +10,6 @@
     itemBomb: "nx_item_bomb",
     itemHourglass: "nx_item_hourglass",
     itemAntidote: "nx_item_antidote",
-    // NEW: Supply Pass
     supplyPassExpiry: "nx_supply_pass_expiry"
   };
 
@@ -51,28 +50,25 @@
       this.addEnergy(this.adWatchReward); localStorage.setItem(LS.lastAdWatch, String(now)); return true;
     },
 
-    // --- NEW: SUPPLY PASS CHECK ---
     checkSupplyPass() {
         const expiry = parseInt(localStorage.getItem(LS.supplyPassExpiry) || "0", 10);
         if (Date.now() < expiry) {
-            // Pass Active - Check if we granted daily aurum
             const lastDate = localStorage.getItem(LS.lastLogin);
             const today = new Date().toDateString();
             if (lastDate !== today) {
-                this.addAurum(2); // +2 Daily for pass holders
+                this.addAurum(2); 
                 alert("NEURO LINK PASS ACTIVE: +2 AURUM DROP!");
             }
         }
     },
 
-    // --- NEW: ACTIVATE PASS ---
     activateSupplyPass() {
         const now = Date.now();
         const currentExp = parseInt(localStorage.getItem(LS.supplyPassExpiry) || "0", 10);
         const start = (currentExp > now) ? currentExp : now;
-        const newExp = start + (30 * 24 * 60 * 60 * 1000); // +30 Days
+        const newExp = start + (30 * 24 * 60 * 60 * 1000);
         localStorage.setItem(LS.supplyPassExpiry, String(newExp));
-        this.addAurum(5); // Immediate Bonus
+        this.addAurum(5);
         alert("NEURO LINK ACTIVATED! +5 Aurum Immediate. +2 Daily for 30 Days.");
     },
 
@@ -86,11 +82,8 @@
       if (!localStorage.getItem(LS.itemAntidote)) localStorage.setItem(LS.itemAntidote, "1");
       
       this.regenerateEnergy();
-      
-      // Check Pass BEFORE Login logic to stack rewards properly
       this.checkSupplyPass();
 
-      // Standard Login Reward (Prisma)
       const lastDate = localStorage.getItem(LS.lastLogin);
       const today = new Date().toDateString();
       if (lastDate !== today) {

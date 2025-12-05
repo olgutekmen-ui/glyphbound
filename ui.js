@@ -1,4 +1,4 @@
-/* ui.js — V3.0 (TUTORIAL UPDATE + IN-GAME SHOP) */
+/* ui.js — V3.4 (TUTORIAL UPDATE + MOBILE SCROLL) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
@@ -6,8 +6,7 @@
 
   const TILE_IMAGES = ["assets/tile_aelia.png", "assets/tile_nocta.png", "assets/tile_vyra.png", "assets/tile_iona.png"];
   const HAZARD_IMAGES = { frozen: "assets/tile_deceit.png?v=104", poison: "assets/tile_plague.png?v=104", junk: "assets/tile_greed.png?v=104", lava: "assets/tile_lava.png?v=104" };
-
-  const TUTORIAL_KEY = "nx_tutorial_final_v3"; // Bumped version to force re-show
+  const TUTORIAL_KEY = "nx_tutorial_final_v4"; // Bumped version to force re-show
 
   function launchTutorial() {
       if(GS.isProcessing) { GS.isProcessing = false; if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); }
@@ -15,21 +14,37 @@
       
       const overlay = document.createElement("div");
       overlay.id = "tutorial-overlay";
-      overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.98); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 2rem;`;
+      // MOBILE FIX: align-items: flex-start to allow scrolling long content on short screens
+      overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(2, 6, 23, 0.98); z-index: 20000; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        color: #fff; text-align: center; padding: 1rem;
+      `;
       
-      // PATCHED: Added Shop/Prisma info
+      // MOBILE FIX: max-height: 90vh and overflow-y: auto
       overlay.innerHTML = `
-        <h2 style="color:#38bdf8; margin-bottom:1rem; font-family:monospace; font-size: 2rem;">COMBAT MANUAL</h2>
-        <div style="text-align:left; color:#ccc; line-height:1.6; max-width:400px; margin-bottom:2rem; font-family:sans-serif; font-size:0.9rem;">
-            <p><strong>1. OBJECTIVE:</strong> Reduce Disciple HP to 0 to win.</p>
-            <p><strong>2. MATCH 3:</strong> Swap tiles to deal damage.</p>
-            <p><strong>3. HERO SKILLS:</strong> Matches charge rings. Tap to unleash Ultimates!</p>
-            <p><strong>4. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p>
-            <p style="color:#facc15; border-top:1px solid #333; padding-top:10px;">
-               <strong>5. LOGISTICS:</strong> Earn <strong>Prisma</strong> from victories. Use it in the <strong>DEPOT</strong> to buy Bombs and Upgrades.
-            </p>
+        <div style="max-height: 90vh; overflow-y: auto; width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
+            <h2 style="color:#38bdf8; margin-bottom:1rem; font-family:monospace; font-size: 1.8rem; margin-top:0;">COMBAT MANUAL</h2>
+            
+            <div style="text-align:left; color:#ccc; line-height:1.5; width:100%; margin-bottom:1.5rem; font-family:sans-serif; font-size:0.85rem; padding: 0 10px;">
+                <p><strong>1. OBJECTIVE:</strong> Reduce Disciple HP to 0.</p>
+                <p><strong>2. MATCH 3:</strong> Swap tiles to deal damage.</p>
+                <p><strong>3. HERO SKILLS:</strong> Matches charge rings. Tap to unleash Ultimates!</p>
+                <p><strong>4. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p>
+                <p><strong>5. LOGISTICS:</strong> Earn <strong>Prisma</strong> from victories. Buy Items in the Depot.</p>
+                <p style="color:#facc15; border-top:1px solid #333; padding-top:10px;">
+                   <strong>6. DAILY OPS:</strong> Check <strong>QUESTS</strong> on the Map. Complete objectives to earn <strong>Aurum</strong> & rare supplies.
+                </p>
+            </div>
+            
+            <button id="tut-close-btn" style="
+                padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); 
+                border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; 
+                font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5); margin-bottom: 20px;
+                flex-shrink: 0;
+            ">INITIALIZE LINK</button>
         </div>
-        <button id="tut-close-btn" style="padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5);">INITIALIZE LINK</button>
       `;
       document.body.appendChild(overlay);
       
@@ -64,77 +79,61 @@
 
   function highlightTile(r,c,a){const e=document.getElementById(`cell-${r}-${c}`);if(e){if(a)e.classList.add("danger-pulse");else e.classList.remove("danger-pulse")}}
   
-  // PATCHED: IN-GAME SHOP LOGIC
   function injectItemBar(){
-      const b=document.createElement("div");
-      b.id="item-bar";
+      const b=document.createElement("div"); b.id="item-bar";
       b.style.cssText=`display:flex;justify-content:center;gap:10px;margin-top:10px;margin-bottom:5px;`;
-      
-      const i=[
-          {id:'bomb', icon:'💣', fn:'useBomb', cost:30, name:'Bomb'},
-          {id:'hourglass', icon:'⏳', fn:'useHourglass', cost:40, name:'Time'},
-          {id:'antidote', icon:'🧪', fn:'useAntidote', cost:20, name:'Antidote'}
-      ];
-      
+      const i=[{id:'bomb', icon:'💣', fn:'useBomb', cost:30, name:'Bomb'},{id:'hourglass', icon:'⏳', fn:'useHourglass', cost:40, name:'Time'},{id:'antidote', icon:'🧪', fn:'useAntidote', cost:20, name:'Antidote'}];
       i.forEach(it=>{
-          const btn=document.createElement("button");
-          btn.className="item-btn";
+          const btn=document.createElement("button"); btn.className="item-btn";
           btn.style.cssText=`background:rgba(255,255,255,0.08);border:1px solid #475569;color:#e2e8f0;border-radius:6px;padding:4px 8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:0.85rem;transition:background 0.2s;`;
           btn.innerHTML=`${it.icon} <span id="count-${it.id}" style="font-weight:bold;color:#38bdf8;">0</span>`;
-          
           btn.onclick=()=>{
               if(GS.isProcessing){ if(UI.flashAlert)UI.flashAlert("BUSY",500); return; }
-              
-              // Check Stock
               const stock = window.economy ? economy.getItemCount(it.id) : 0;
-              
-              if (stock > 0) {
-                  // Use it
-                  if(window.Items && window.Items[it.fn]) Items[it.fn]();
-              } else {
-                  // PATCH: Quick Buy
-                  if(confirm(`Empty! Buy ${it.name}? Cost: ${it.cost} 💎`)) {
-                      if(window.economy && economy.spendPrisma(it.cost)) {
-                          economy.addItem(it.id, 1);
-                          updateItemCounts();
-                          updatePrismaUI();
-                          if(window.Items && window.Items[it.fn]) Items[it.fn](); // Auto-use after buy
-                      } else {
-                          alert("Insufficient Prisma!");
-                      }
-                  }
-              }
+              if (stock > 0) { if(window.Items && window.Items[it.fn]) Items[it.fn](); } 
+              else { if(confirm(`Empty! Buy ${it.name}? Cost: ${it.cost} 💎`)) { if(window.economy && economy.spendPrisma(it.cost)) { economy.addItem(it.id, 1); updateItemCounts(); updatePrismaUI(); if(window.Items && window.Items[it.fn]) Items[it.fn](); } else { alert("Insufficient Prisma!"); } } }
           };
           b.appendChild(btn);
       });
-      const ab=document.getElementById("ability-bar");
-      if(ab) ab.parentNode.insertBefore(b,ab);
+      const ab=document.getElementById("ability-bar"); if(ab) ab.parentNode.insertBefore(b,ab);
   }
 
   function updateItemCounts(){if(!window.economy)return;const b=document.getElementById("count-bomb"),h=document.getElementById("count-hourglass"),a=document.getElementById("count-antidote");if(b)b.innerText=economy.getItemCount('bomb');if(h)h.innerText=economy.getItemCount('hourglass');if(a)a.innerText=economy.getItemCount('antidote')}
-  
   function injectTutorialButton(){const e=document.getElementById("tut-trig");if(e)e.remove();const b=document.createElement("div");b.id="tut-trig";b.innerText="?";b.style.cssText=`position:fixed;top:70px;right:15px;width:36px;height:36px;border:2px solid #38bdf8;color:#38bdf8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;z-index:15000;background:rgba(15,23,42,0.9);box-shadow:0 0 10px rgba(0,0,0,0.5);font-family:monospace;font-size:1.2rem;`;b.onclick=launchTutorial;document.body.appendChild(b);const m=document.createElement("div");m.id="mute-btn";m.innerText="🔊";m.style.cssText=`position:fixed;top:70px;right:60px;width:36px;height:36px;border:2px solid #38bdf8;color:#38bdf8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;z-index:15000;background:rgba(15,23,42,0.9);box-shadow:0 0 10px rgba(0,0,0,0.5);font-size:1.2rem;`;m.onclick=()=>{if(window.AudioSys)AudioSys.toggleMute()};document.body.appendChild(m);if(window.AudioSys)AudioSys.updateMuteState()}
   
-  function bindAbilityklClicks(){const b=(id,f)=>{const e=el(id+"-ability-ring");if(e){const n=e.cloneNode(!0);e.parentNode.replaceChild(n,e);n.onclick=()=>{if(GS.isProcessing)return;const i=document.getElementById(id+"-ability-icon");if(!i||!i.classList.contains("ability-ready"))return;n.style.background="conic-gradient(#38bdf8 0deg, rgba(255,255,255,0.08) 0deg)";i.classList.remove("ability-ready");i.classList.remove("icon-full-opacity");i.style.cssText="opacity:0.4 !important; transition:opacity 0.2s;";const pt=document.getElementById("tap-"+id);if(pt)pt.remove();if(window.Abilities&&window.Abilities[f]){try{window.Abilities[f]()}catch(e){console.error(e);GS.isProcessing=!1}}}}};b("aelia","activateAelia");b("nocta","activateNocta");b("vyra","activateVyra");b("iona","activateIona")}
+  function bindAbilityklClicks(){
+      const setup = (id, f) => {
+          const ring = el(id+"-ability-ring"); if(!ring) return;
+          ring.onclick = async (e) => {
+              if (window.AudioSys && AudioSys.ctx && AudioSys.ctx.state === 'suspended') { try { await AudioSys.ctx.resume(); } catch(err){} }
+              if (GS.isProcessing) return;
+              const icon = document.getElementById(id+"-ability-icon");
+              if (!icon || !icon.classList.contains("ability-ready")) return;
+              ring.style.background="conic-gradient(#38bdf8 0deg, rgba(255,255,255,0.08) 0deg)";
+              icon.classList.remove("ability-ready"); icon.classList.remove("icon-full-opacity");
+              icon.style.cssText="opacity:0.4 !important; transition:opacity 0.2s;";
+              const pt=document.getElementById("tap-"+id); if(pt) pt.remove();
+              if(window.Abilities && window.Abilities[f]){ try { window.Abilities[f](); } catch(e) { console.error(e); GS.isProcessing=false; } }
+          };
+      };
+      setup("aelia","activateAelia"); setup("nocta","activateNocta"); setup("vyra","activateVyra"); setup("iona","activateIona");
+  }
   
   function initAbilityIcons(){const m={"aelia":0,"nocta":1,"vyra":2,"iona":3};for(const[h,t]of Object.entries(m)){const i=el(h+"-ability-icon");if(i){i.classList.add(`glyph-type-${t}`);i.style.transition="transform 0.2s, filter 0.2s, opacity 0.2s"}}}
 
   function updateAbilityUI() {
     if (!IS_GAME) return;
-    const bar = el("ability-bar");
-    if (GS.isProcessing) { if(bar) bar.style.opacity = "0.7"; } else { if(bar) bar.style.opacity = "1"; }
-    const A = [ { id: "aelia", charge: GS.aeliaCharge, max: 10 }, { id: "nocta", charge: GS.noctaCharge, max: 12 }, { id: "vyra",  charge: GS.vyraCharge,  max: 15 }, { id: "iona",  charge: GS.ionaCharge,  max: 18 } ];
+    const bar = el("ability-bar"); if (GS.isProcessing) { if(bar) bar.style.opacity = "0.7"; } else { if(bar) bar.style.opacity = "1"; }
+    const COSTS = window.ABILITY_COSTS || { aelia:20, nocta:25, vyra:30, iona:35 };
+    const A = [ { id: "aelia", charge: GS.aeliaCharge, max: COSTS.aelia }, { id: "nocta", charge: GS.noctaCharge, max: COSTS.nocta }, { id: "vyra",  charge: GS.vyraCharge,  max: COSTS.vyra }, { id: "iona",  charge: GS.ionaCharge,  max: COSTS.iona } ];
     A.forEach((h) => {
-      const ring = el(h.id + "-ability-ring");
-      const icon = el(h.id + "-ability-icon");
-      const slot = ring ? ring.parentNode : null;
+      const ring = el(h.id + "-ability-ring"); const icon = el(h.id + "-ability-icon"); const slot = ring ? ring.parentNode : null;
       if (!ring || !icon) return;
       const pct = Math.min(1, h.charge / h.max);
       if (pct >= 1) {
           ring.style.background = `conic-gradient(#38bdf8 360deg, transparent 0deg)`;
           ring.style.boxShadow = `0 0 15px #38bdf8`;
-          icon.classList.add("ability-ready");
-          ring.classList.add("ring-ready");
+          icon.classList.add("ability-ready"); ring.classList.add("ring-ready");
           icon.style.cssText = "opacity: 1 !important; transform: scale(1.0); transition: opacity 0.2s;";
           icon.classList.add("icon-full-opacity");
           if (slot && !document.getElementById("tap-" + h.id)) {
@@ -145,8 +144,7 @@
       } else {
           ring.style.background = `conic-gradient(#38bdf8 ${pct*360}deg, rgba(255,255,255,0.1) ${pct*360}deg)`;
           ring.style.boxShadow = `none`;
-          icon.classList.remove("ability-ready");
-          ring.classList.remove("ring-ready");
+          icon.classList.remove("ability-ready"); ring.classList.remove("ring-ready");
           icon.classList.remove("icon-full-opacity");
           const prevTap = document.getElementById("tap-" + h.id); if(prevTap) prevTap.remove();
           icon.style.cssText = `opacity: 0.4 !important; transform: scale(1.0);`;

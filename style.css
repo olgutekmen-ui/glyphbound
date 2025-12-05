@@ -1,8 +1,5 @@
-/* style.css — FINAL MASTER (INCLUDES COMBO TEXT & ALL FX) */
+/* style.css — V3.2 (RESPONSIVE COMBO TEXT) */
 
-/* ============================================================
-    GLOBAL PAGE BASE
-============================================================ */
 :root {
   --neon-blue: #0ea5e9;
   --neon-purple: #8b5cf6;
@@ -18,8 +15,12 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   user-select: none;
   -webkit-user-select: none;
-  overflow-x: hidden;
-  overscroll-behavior: none;
+  
+  /* MOBILE FIX: ALLOW SCROLL */
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch;
 }
 
 img { max-width: 100%; display: block; }
@@ -28,12 +29,12 @@ img { max-width: 100%; display: block; }
   max-width: 480px;
   margin: 0 auto;
   padding: 0.5rem;
-  position: relative; /* Anchor for absolutes */
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 30px; 
 }
 
-/* ============================================================
-    MAP SCREEN
-============================================================ */
+/* MAP SCREEN */
 #map-screen {
   background-color: var(--bg-dark);
   background-image: 
@@ -66,6 +67,7 @@ img { max-width: 100%; display: block; }
 .nav-btn {
   background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue);
   padding: 5px 10px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; border-radius: 2px; transition: all 0.2s;
+  position: relative;
 }
 .nav-btn:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 10px var(--neon-blue); }
 
@@ -114,9 +116,7 @@ img { max-width: 100%; display: block; }
 
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ============================================================
-    GAME HUD
-============================================================ */
+/* HUD */
 #top-hud { display: flex; flex-direction: column; gap: 0.4rem; text-align: center; margin-bottom: 0.5rem; }
 #hud-main-row { display: flex; justify-content: space-between; padding: 0 10px; font-size: 1.1rem; font-weight: 900; color: #fff; letter-spacing: 1px; margin-bottom: 4px; }
 #hud-sub-row { display: flex; justify-content: center; font-size: 0.8rem; font-family: monospace; }
@@ -126,20 +126,16 @@ img { max-width: 100%; display: block; }
 #disciple-hp-bar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #ef4444, #f97316); transition: width 0.1s linear; }
 #disciple-hp-label { font-size: 0.7rem; color: #fca5a5; }
 
-/* ============================================================
-    GAME GRID & TILES (ROUND)
-============================================================ */
+/* GRID */
 #game-grid {
   margin: 0 auto; display: grid; grid-template-columns: repeat(9, 1fr); 
   gap: 2px; width: 96vw; max-width: 460px; aspect-ratio: 1 / 1; touch-action: none; 
 }
 .grid-cell { width: 100%; aspect-ratio: 1/1; position: relative; touch-action: none; }
-
 .cell-selected .tile3D { box-shadow: 0 0 0 2px #fff, inset 0 0 15px #fff; filter: brightness(1.3); }
-
 .tile3D {
   background: linear-gradient(145deg, #1e293b, #0f172a);
-  border-radius: 50%; /* ROUND */
+  border-radius: 50%;
   border: none !important; outline: none !important;
   box-shadow: inset 0 0 10px rgba(0,0,0,0.6), 0 4px 6px rgba(0,0,0,0.5);
   display: flex; align-items: center; justify-content: center;
@@ -147,7 +143,6 @@ img { max-width: 100%; display: block; }
   transition: transform 0.2s, box-shadow 0.2s;
   transform: scale(0.92);
 }
-
 .glyphContainer { width: 80%; height: 80%; display: flex; align-items: center; justify-content: center; }
 .tileIcon { width: 100%; height: 100%; object-fit: contain; pointer-events: none; transition: transform 0.2s; }
 
@@ -157,32 +152,16 @@ img { max-width: 100%; display: block; }
 .glyph-type-2 { filter: none; }
 .glyph-type-3 { filter: none; }
 
-/* LAVA */
-.lavaTile .tile3D { background: #1a0500; box-shadow: inset 0 0 12px #ff4500; border: none !important; border-radius: 50%; }
+/* HAZARD ANIMATIONS */
+.lavaTile .tile3D { background: #1a0500; box-shadow: inset 0 0 12px #ff4500; border: none !important; border-radius: 50%; animation: magmaPulse 2s infinite ease-in-out; }
 .lavaTile img { filter: none !important; opacity: 1 !important; }
-@keyframes magmaPulse { 
-    0% { box-shadow: inset 0 0 6px #ff4500; } 
-    50% { box-shadow: inset 0 0 18px #ff0000; } 
-    100% { box-shadow: inset 0 0 6px #ff4500; } 
-}
-.lavaTile .tile3D { animation: magmaPulse 2s infinite ease-in-out; }
-
-/* HAZARDS */
+@keyframes magmaPulse { 0% { box-shadow: inset 0 0 6px #ff4500; } 50% { box-shadow: inset 0 0 18px #ff0000; } 100% { box-shadow: inset 0 0 6px #ff4500; } }
 @keyframes poisonPulse { 0% { filter: drop-shadow(0 0 3px #00ff00cc); transform: scale(1); } 50% { filter: drop-shadow(0 0 10px #00ff66ff); transform: scale(1.05); } 100% { filter: drop-shadow(0 0 3px #00ff00cc); transform: scale(1); } }
 .poisonTile img { animation: poisonPulse 1.6s infinite ease-in-out; }
 @keyframes frozenShimmer { 0% { filter: brightness(1) hue-rotate(0deg); } 40% { filter: brightness(1.25) hue-rotate(-15deg); } 60% { filter: brightness(1.4) hue-rotate(12deg); } 100% { filter: brightness(1) hue-rotate(0deg); } }
 .frozenTile img { animation: frozenShimmer 2.4s infinite linear; }
 @keyframes junkFlicker { 0% { filter: brightness(1); } 20% { filter: brightness(0.8); } 25% { filter: brightness(1.4); } 35% { filter: brightness(0.8); } 100% { filter: brightness(1); } }
 .junkTile img { animation: junkFlicker 1.8s infinite steps(4); }
-
-/* ============================================================
-    BUTTONS & MENUS
-============================================================ */
-/* ITEM BAR */
-#item-bar { z-index: 100; position: relative; }
-.item-btn { transition: all 0.2s; font-family: 'Segoe UI', monospace; letter-spacing: 1px; }
-.item-btn:hover { transform: translateY(-2px); border-color: #fff !important; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
-.item-btn:active { transform: scale(0.95); }
 
 /* ABILITY RINGS */
 .ability-slot { display: flex; flex-direction: column; align-items: center; width: 64px; flex-shrink: 0; }
@@ -205,17 +184,16 @@ img { max-width: 100%; display: block; }
 .bottom-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
 #bottom-buttons { margin-top: 0.75rem; display: flex; justify-content: center; gap: 0.5rem; }
 
+/* NOTIFICATION DOT */
+.notify-badge {
+    position: absolute; top: -5px; right: -5px; width: 12px; height: 12px;
+    background: #ef4444; border-radius: 50%; border: 2px solid #0f172a;
+    box-shadow: 0 0 5px #ef4444;
+}
+
 /* OVERLAYS */
-#end-overlay {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(15, 23, 42, 0.88); display: none; z-index: 999;
-  align-items: center; justify-content: center;
-}
-#end-box {
-  background: rgba(255,255,255,0.06); border-radius: 16px; padding: 1rem 1.25rem;
-  width: 80%; max-width: 360px; text-align: center;
-  box-shadow: 0 0 16px rgba(255,255,255,0.15);
-}
+#end-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.88); display: none; z-index: 999; align-items: center; justify-content: center; }
+#end-box { background: rgba(255,255,255,0.06); border-radius: 16px; padding: 1rem 1.25rem; width: 80%; max-width: 360px; text-align: center; box-shadow: 0 0 16px rgba(255,255,255,0.15); }
 #end-chibi { width: 120px; height: 120px; object-fit: contain; margin-bottom: 0.5rem; }
 .victory-title { font-size: 1.3rem; margin-bottom: 0.75rem; color: #86efac; text-shadow: 0 0 10px rgba(74,222,128,0.65); }
 .defeat-title { font-size: 1.3rem; margin-bottom: 0.75rem; color: #fca5a5; text-shadow: 0 0 10px rgba(248,113,113,0.6); }
@@ -223,83 +201,53 @@ img { max-width: 100%; display: block; }
 #end-box button:hover { background: rgba(255,255,255,0.15); }
 
 /* Chibi Frames */
-.chibiFrame {
-  width: 96px; height: 96px; overflow: hidden; border-radius: 1rem;
-  background: rgba(255,255,255,0.05);
-  box-shadow: 0 0 12px rgba(255,255,255,0.12);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
+.chibiFrame { width: 96px; height: 96px; overflow: hidden; border-radius: 1rem; background: rgba(255,255,255,0.05); box-shadow: 0 0 12px rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .chibiFrame img { width: 100%; height: 100%; object-fit: contain; }
 #chibi-row { display: flex; justify-content: space-between; padding: 0 1rem; margin-bottom: 0.5rem; }
 
-/* --- 1. BOSS ALERT (TOP BANNER) --- */
-#alert-banner {
-  position: fixed !important; 
-  top: 12% !important; 
-  left: 50% !important; 
-  transform: translateX(-50%) !important;
-  width: 95%; max-width: 500px;
-  padding: 0.8rem !important;
-  background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(220, 38, 38, 0.95) 20%, rgba(220, 38, 38, 0.95) 80%, rgba(0,0,0,0) 100%) !important;
-  border-top: 2px solid #ef4444 !important;
-  border-bottom: 2px solid #ef4444 !important;
-  border-left: none !important; border-right: none !important; border-radius: 0 !important;
-  color: #fff !important;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  font-size: 1.4rem !important; font-weight: 900 !important; 
-  text-transform: uppercase; text-align: center; letter-spacing: 3px;
-  text-shadow: 0 0 10px rgba(0,0,0,0.8);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4) !important;
-  z-index: 20000 !important; 
-  display: none; pointer-events: none;
-}
+/* ALERT BANNER */
+#alert-banner { position: fixed !important; top: 12% !important; left: 50% !important; transform: translateX(-50%) !important; width: 95%; max-width: 500px; padding: 0.8rem !important; background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(220, 38, 38, 0.95) 20%, rgba(220, 38, 38, 0.95) 80%, rgba(0,0,0,0) 100%) !important; border-top: 2px solid #ef4444 !important; border-bottom: 2px solid #ef4444 !important; border-left: none !important; border-right: none !important; border-radius: 0 !important; color: #fff !important; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 1.4rem !important; font-weight: 900 !important; text-transform: uppercase; text-align: center; letter-spacing: 3px; text-shadow: 0 0 10px rgba(0,0,0,0.8); box-shadow: 0 0 30px rgba(239, 68, 68, 0.4) !important; z-index: 20000 !important; display: none; pointer-events: none; }
 .alert-active { display: flex !important; align-items: center; justify-content: center; animation: slideDownWarn 0.3s forwards !important; }
 @keyframes slideDownWarn { from { top: -20%; opacity: 0; } to { top: 12%; opacity: 1; } }
 
-/* --- 2. COMBO TEXT (CENTERED & HUGE) --- */
-.combo-text {
-    position: fixed;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    font-size: 4.5rem !important;
-    font-weight: 900;
-    font-family: 'Segoe UI', sans-serif;
-    
-    /* SOLID GOLD COLOR (Max Visibility) */
-    color: #fbbf24 !important;
-    
-    /* THICK OUTLINE */
-    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 20px #b45309;
-    
+/* COMBO TEXT - PATCHED FOR MOBILE */
+.combo-text { 
+    position: fixed; 
+    top: 50% !important; 
+    left: 50% !important; 
+    transform: translate(-50%, -50%) !important; 
+    font-size: 4rem !important; /* Desktop Default */
+    font-weight: 900; 
+    font-family: 'Segoe UI', Tahoma, sans-serif; 
+    color: #fbbf24 !important; 
+    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
     z-index: 999999 !important; 
-    pointer-events: none;
-    
-    animation: comboPop 1.2s ease-out forwards;
-}
-@keyframes comboPop {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
-    40% { transform: translate(-50%, -50%) scale(1.0); }
-    80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
+    pointer-events: none; 
+    animation: comboPop 1.2s ease-out forwards; 
 }
 
-/* --- 3. TARGET RETICLE --- */
-.danger-pulse { position: relative; z-index: 100; }
-.danger-pulse .tile3D {
-    animation: targetStrobe 0.2s infinite alternate !important;
-    box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000 !important;
-    border: 3px solid #fff !important;
+/* MOBILE MEDIA QUERY */
+@media (max-width: 600px) {
+    .combo-text {
+        font-size: 2.5rem !important; /* Smaller on mobile */
+    }
 }
-.danger-pulse::after {
-    content: "✜"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 3rem; color: #fff; text-shadow: 0 0 10px #ff0000; z-index: 101; pointer-events: none;
-    animation: lockOn 0.5s ease-in-out;
-}
-@keyframes targetStrobe { from { filter: brightness(1); } to { filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); } }
-@keyframes lockOn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(2.0); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); } }
+
+@keyframes comboPop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 40% { transform: translate(-50%, -50%) scale(1.0); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); } }
+
+/* ITEM BAR */
+#item-bar { z-index: 100; position: relative; }
+.item-btn { transition: all 0.2s; font-family: 'Segoe UI', monospace; letter-spacing: 1px; }
+.item-btn:hover { transform: translateY(-2px); border-color: #fff !important; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+.item-btn:active { transform: scale(0.95); }
+
+/* FLOATING DAMAGE */
+.float-dmg { position: fixed; color: #fff; font-weight: 900; font-size: 1.2rem; text-shadow: 0 0 5px #ff0000; pointer-events: none; z-index: 9999; animation: floatUp 0.8s forwards ease-out; }
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-10px) scale(1.2); } 100% { opacity: 0; transform: translateY(-50px) scale(1.0); } }
+
+/* PARTICLES */
+.fx-particle { position: fixed; width: 6px; height: 6px; border-radius: 2px; pointer-events: none; z-index: 8000; animation: particleFly 0.5s forwards ease-out; }
+@keyframes particleFly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
 
 /* HELPER OPACITY */
 .icon-full-opacity { opacity: 1 !important; filter: brightness(1.2) drop-shadow(0 0 5px rgba(255,255,255,0.5)) !important; }
@@ -309,49 +257,7 @@ img { max-width: 100%; display: block; }
 @keyframes shakeBig { 0% { transform: translate(0, 0); } 10% { transform: translate(-5px, -5px) rotate(-1deg); } 30% { transform: translate(5px, 5px) rotate(1deg); } 50% { transform: translate(-5px, 5px); } 70% { transform: translate(5px, -5px); } 100% { transform: translate(0, 0); } }
 .shake-small { animation: shakeSmall 0.3s ease-out; }
 .shake-big { animation: shakeBig 0.4s ease-out; }
-
-/* FLOATING DAMAGE */
-.float-dmg {
-  position: fixed; color: #fff; font-weight: 900; font-size: 1.2rem; text-shadow: 0 0 5px #ff0000;
-  pointer-events: none; z-index: 9999; animation: floatUp 0.8s forwards ease-out;
-}
-@keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(0.5); } 20% { transform: translateY(-10px) scale(1.2); } 100% { opacity: 0; transform: translateY(-50px) scale(1.0); } }
-
-/* PARTICLES */
-.fx-particle {
-  position: fixed; width: 6px; height: 6px; border-radius: 2px; pointer-events: none; z-index: 8000;
-  animation: particleFly 0.5s forwards ease-out;
-}
-@keyframes particleFly { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
-/* style.css — FINAL MASTER */
-/* ... [Paste this at the end of your CSS] ... */
-
-/* COMBO COUNTER */
-.combo-text {
-    position: fixed;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    font-size: 4rem !important;
-    font-weight: 900;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    
-    /* Solid Gold */
-    color: #fbbf24 !important;
-    
-    /* Outline */
-    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-    
-    z-index: 999999 !important; 
-    pointer-events: none;
-    
-    animation: comboPop 1.2s ease-out forwards;
-}
-
-@keyframes comboPop {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
-    40% { transform: translate(-50%, -50%) scale(1.0); }
-    80% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
-}
+.danger-pulse .tile3D { animation: targetStrobe 0.2s infinite alternate !important; box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000 !important; border: 3px solid #fff !important; }
+.danger-pulse::after { content: "✜"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #fff; text-shadow: 0 0 10px #ff0000; z-index: 101; pointer-events: none; animation: lockOn 0.5s ease-in-out; }
+@keyframes targetStrobe { from { filter: brightness(1); } to { filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); } }
+@keyframes lockOn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(2.0); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); } }

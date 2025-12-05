@@ -1,6 +1,5 @@
-/* levels.js — V2.0 (BALANCED PROGRESSION) */
+/* levels.js — V3.0 (200 LEVEL EXPANSION) */
 (function () {
-  // DISCIPLE HIERARCHY
   const DISCIPLES = {
     WAR:    { id: "WAR",    name: "WAR",    attack: "drain"  }, 
     DECEIT: { id: "DECEIT", name: "DECEIT", attack: "deceit" },
@@ -12,63 +11,60 @@
     return { id, name, desc, disciple, moves, discipleMaxHP: hp, attackRate: rate };
   }
 
-  // KEY MILESTONES (Hand-Tuned Bosses)
-  const KEY_LEVELS = {
-      // ZONE 1: WAR (Tutorial / Warmup)
-      // Base HP buffed to 3500 to ensure mechanics are learned.
-      1:  L(1,  "Neon Breach",      "Link init.",            DISCIPLES.WAR,    30, 3500, 3),
-      10: L(10, "The General",      "BOSS: Titan of War.",   DISCIPLES.WAR,    35, 9500, 2),
-      
-      // ZONE 2: DECEIT (Tricky)
-      11: L(11, "Mirror Maze",      "Illusions forming.",    DISCIPLES.DECEIT, 28, 11000, 3),
-      20: L(20, "The Architect",    "BOSS: Master of Lies.", DISCIPLES.DECEIT, 40, 18500, 2),
+  // BOSS TEMPLATES (Hand-tuned for impact)
+  const BOSS_NAMES = [
+      "The Gatekeeper", "Titan of War", "Master of Lies", "Patient Zero", "Data Eater",
+      "The Corruptor", "System Shock", "Null Pointer", "Stack Overflow", "The Glitch",
+      "Logic Bomb", "Fatal Exception", "Memory Leak", "Infinite Loop", "Blue Screen",
+      "Kernel Panic", "Rootkit", "Trojan Prime", "Worm Queen", "OMEGA ZERO"
+  ];
 
-      // ZONE 3: PLAGUE (The Infection)
-      21: L(21, "Toxic Bloom",      "Infection spreading.",  DISCIPLES.PLAGUE, 26, 19000, 3),
-      30: L(30, "Hive Queen",       "BOSS: Patient Zero.",   DISCIPLES.PLAGUE, 45, 28000, 2),
-
-      // ZONE 4: GREED (High Difficulty)
-      31: L(31, "Golden Cage",      "Avarice takes hold.",   DISCIPLES.GREED,  26, 29000, 3),
-      40: L(40, "The Hoarder",      "BOSS: Data Eater.",     DISCIPLES.GREED,  50, 42000, 2),
-
-      // ZONE 5: THE CORE (Nightmare)
-      41: L(41, "The Descent",      "Reality breaking.",     DISCIPLES.WAR,    25, 45000, 2),
-      50: L(50, "OMEGA",            "FINAL BOSS.",           DISCIPLES.GREED,  60, 65000, 2) 
-      // Note: OMEGA HP increased slightly because Player base DMG is doubled now.
-  };
-
-  function getZoneDisciple(lvlId) {
-      if (lvlId <= 10) return DISCIPLES.WAR;
-      if (lvlId <= 20) return DISCIPLES.DECEIT;
-      if (lvlId <= 30) return DISCIPLES.PLAGUE;
-      if (lvlId <= 40) return DISCIPLES.GREED;
-      return DISCIPLES.GREED;
-  }
-
-  // GENERATOR LOOP (Fills the gaps)
   const FINAL_LEVELS = [];
-  for (let i = 1; i <= 50; i++) {
-      if (KEY_LEVELS[i]) {
-          FINAL_LEVELS.push(KEY_LEVELS[i]);
+  const ZONE_TYPES = [DISCIPLES.WAR, DISCIPLES.DECEIT, DISCIPLES.PLAGUE, DISCIPLES.GREED];
+
+  for (let i = 1; i <= 200; i++) {
+      // 1. DETERMINE ZONE & DISCIPLE
+      // Zones are 10 levels long. 20 Zones total.
+      // We loop through the 4 Disciple types every 40 levels.
+      const zoneIndex = Math.floor((i - 1) / 10); // 0..19
+      const discipleType = ZONE_TYPES[zoneIndex % 4];
+      
+      // 2. SCALING MATH
+      // Base: 3500. 
+      // Early Game (1-50): +450 per level.
+      // Mid Game (51-100): +800 per level (Artifacts needed).
+      // Late Game (101-200): +1500 per level (Optimized gear needed).
+      
+      let hp = 3500;
+      if (i <= 50) {
+          hp += (i - 1) * 450;
+      } else if (i <= 100) {
+          hp = 25550 + ((i - 50) * 800); // Start from ~26k
       } else {
-          // MATH: NEW SCALING CURVE
-          // Base 3500 (Harder Start). +450 HP per level (Smoother curve).
-          // Previous curve was +800, which made mid-game impossible.
-          
-          let base = 3500;
-          let scaling = (i - 1) * 450; 
-          let hp = base + scaling;
-          
-          FINAL_LEVELS.push(L(
-              i, 
-              `Sector ${i}`, 
-              "System intrusion.", 
-              getZoneDisciple(i), 
-              28, 
-              hp, 
-              3
-          ));
+          hp = 65550 + ((i - 100) * 1500); // Start from ~66k, ends at ~215k
       }
+
+      // Boss Buff (Every 10th level)
+      const isBoss = (i % 10 === 0);
+      if (isBoss) hp = Math.floor(hp * 1.5); 
+
+      // 3. GENERATE LEVEL
+      const name = isBoss ? `BOSS: ${BOSS_NAMES[(i/10)-1]}` : `Sector ${i}`;
+      const desc = isBoss ? "CRITICAL THREAT DETECTED." : "System intrusion in progress.";
+      
+      // Attack Rate: Harder levels = Faster attacks
+      let rate = 3;
+      if (i > 100) rate = 2; // Elite Mode
+
+      FINAL_LEVELS.push(L(
+          i, 
+          name, 
+          desc, 
+          discipleType, 
+          isBoss ? 40 : 30, // More moves for bosses
+          hp, 
+          rate
+      ));
   }
 
   window.LEVELS = FINAL_LEVELS;

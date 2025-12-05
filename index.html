@@ -5,272 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Glyphbound: Protocol</title>
   <style>
-    /* =========================================
-       GLOBAL & RESET
-       ========================================= */
-    :root {
-      --neon-blue: #0ea5e9;
-      --neon-purple: #d946ef;
-      --bg-dark: #020617;
-      --text-color: #e2e8f0;
-    }
-
+    :root { --neon-blue: #0ea5e9; --neon-purple: #d946ef; --bg-dark: #020617; --text-color: #e2e8f0; }
     * { box-sizing: border-box; }
-
     body {
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-dark);
-      color: var(--text-color);
+      margin: 0; padding: 0; background-color: var(--bg-dark); color: var(--text-color);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      
-      /* CYBERPUNK GRID BACKGROUND */
+      height: 100vh; width: 100vw; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       background-image: 
         linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px),
         radial-gradient(circle at 50% 50%, rgba(2, 6, 23, 0.2), #020617 90%);
       background-size: 40px 40px, 40px 40px, 100% 100%;
     }
-
-    /* =========================================
-       LOGO CONTAINER
-       ========================================= */
-    .logo-wrapper {
-      position: relative;
-      margin-bottom: 3rem;
-      animation: floatLogo 4s ease-in-out infinite;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #studio-logo {
-      width: 220px;
-      height: 220px;
-      border-radius: 24px;
-      box-shadow: 0 0 20px rgba(14, 165, 233, 0.2), 0 0 60px rgba(217, 70, 239, 0.1);
-      transition: transform 0.3s ease;
-      display: block;
-      object-fit: cover;
-      background: #0f172a;
-      position: relative;
-      z-index: 2;
-    }
-
-    .logo-wrapper::after {
-      content: '';
-      position: absolute;
-      top: -10px; left: -10px; right: -10px; bottom: -10px;
-      border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      z-index: 1;
-      animation: pulseRing 3s infinite;
-    }
-
-    /* TAGLINE STYLE */
-    .studio-tagline {
-        margin-top: 20px;
-        color: #38bdf8;
-        font-family: monospace;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        font-weight: bold;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-        animation: fadeIn 2s ease-in;
-    }
-
-    /* =========================================
-       BUTTON STYLES
-       ========================================= */
-    .action-area {
-      text-align: center;
-      opacity: 0;
-      animation: fadeInUp 1s ease-out 0.5s forwards;
-    }
-
+    .logo-wrapper { position: relative; margin-bottom: 3rem; animation: floatLogo 4s ease-in-out infinite; display: flex; flex-direction: column; align-items: center; }
+    #studio-logo { width: 220px; height: 220px; border-radius: 24px; box-shadow: 0 0 20px rgba(14, 165, 233, 0.2), 0 0 60px rgba(217, 70, 239, 0.1); background: #0f172a; object-fit: cover; z-index: 2; }
+    .studio-tagline { margin-top: 20px; color: #38bdf8; font-family: monospace; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
+    .action-area { text-align: center; opacity: 0; animation: fadeInUp 1s ease-out 0.5s forwards; }
     #init-btn {
-      background: transparent;
-      color: #fff;
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0.2rem;
-      padding: 1rem 2.5rem;
-      border: 1px solid var(--neon-blue);
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s;
-      text-transform: uppercase;
+      background: transparent; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.2rem;
+      padding: 1rem 2.5rem; border: 1px solid var(--neon-blue); border-radius: 4px; cursor: pointer;
+      position: relative; overflow: hidden; transition: all 0.3s; text-transform: uppercase;
       box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
     }
-
-    #init-btn:hover {
-      background: rgba(14, 165, 233, 0.15);
-      box-shadow: 0 0 25px var(--neon-blue);
-      text-shadow: 0 0 8px #fff;
-      transform: translateY(-2px);
-      border-color: #fff;
-    }
-
-    #init-btn::before {
-      content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--neon-blue);
-    }
-    #init-btn::after {
-      content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; background: var(--neon-purple);
-    }
-
-    .system-status {
-      margin-top: 1rem;
-      font-size: 0.75rem;
-      color: #64748b;
-      letter-spacing: 0.1em;
-      font-family: monospace;
-    }
-
-    #debug-msg {
-        color: #ef4444;
-        font-size: 0.8rem;
-        margin-top: 10px;
-        font-family: monospace;
-        display: none;
-        background: rgba(0,0,0,0.8);
-        padding: 5px;
-        border-radius: 4px;
-        z-index: 10;
-    }
-
-    /* =========================================
-       LORE OVERLAY STYLES
-       ========================================= */
-    #lore-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(2, 6, 23, 0.98); z-index: 10000;
-        display: none; flex-direction: column; align-items: center; justify-content: center;
-        padding: 2rem; text-align: center;
-        animation: fadeIn 0.5s ease-out;
-    }
-    .lore-title { 
-        font-size: 1.8rem; color: #ef4444; font-weight: 900; letter-spacing: 2px; 
-        margin-bottom: 1rem; text-shadow: 0 0 15px #ef4444; 
-    }
-    .lore-text { 
-        max-width: 500px; line-height: 1.6; color: #cbd5e1; margin-bottom: 2rem; font-size: 1rem; 
-    }
-    .lore-btn {
-        background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; color: #fff;
-        padding: 1rem 3rem; font-weight: bold; border-radius: 4px; cursor: pointer;
-        text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(14,165,233,0.4);
-    }
-
-    /* =========================================
-       ANIMATIONS
-       ========================================= */
-    @keyframes floatLogo {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes pulseRing {
-      0% { transform: scale(0.95); opacity: 0.5; border-color: var(--neon-blue); }
-      100% { transform: scale(1.1); opacity: 0; border-color: var(--neon-purple); }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; } to { opacity: 1; }
-    }
+    #init-btn:hover { background: rgba(14, 165, 233, 0.15); box-shadow: 0 0 25px var(--neon-blue); text-shadow: 0 0 8px #fff; transform: translateY(-2px); border-color: #fff; }
+    .system-status { margin-top: 1rem; font-size: 0.75rem; color: #64748b; letter-spacing: 0.1em; font-family: monospace; }
+    @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
-
   <div class="logo-wrapper">
-    <img id="studio-logo" src="assets/LogoSyncStudios.png" alt="SYNC-DIVE" />
+    <img id="studio-logo" src="assets/LogoSyncStudios.png" alt="SYNC-DIVE" onerror="this.style.display='none'"/>
     <div class="studio-tagline">Dream. Dive. Disrupt.</div>
-    <div id="debug-msg"></div>
   </div>
-
   <div class="action-area">
-    <button id="init-btn">Initialize Link</button>
-    <div style="margin-top:10px; font-size:0.7rem; color:#64748b; cursor:pointer;" onclick="recoverData()">[ RECOVER DATA ]</div>
+    <button id="init-btn" onclick="enterWorld()">Initialize Link</button>
     <div class="system-status" id="status-text">SYSTEM STANDBY...</div>
   </div>
-
-  <div id="lore-overlay">
-      <div class="lore-title">NEO SEOUL ALERT</div>
-      <div class="lore-text">
-          <p>The <strong>DISCIPLES</strong>—rogue AI constructs—have seized the city grid. They are corrupting the data flow with chaos.</p>
-          <p>As a <strong>GLYPHBOUND COMMANDER</strong>, you must link with our Heroes (Aelia, Nocta, Vyra, Iona) to purge the corruption.</p>
-          <p style="color:#38bdf8; font-weight:bold; margin-top:15px;">MATCH GLYPHS. CHARGE ABILITIES. RESTORE ORDER.</p>
-      </div>
-      <button class="lore-btn" onclick="closeLore()">ACCEPT MISSION</button>
-  </div>
-
-  <script src="save_system.js"></script>
-
   <script>
-    const btn = document.getElementById("init-btn");
-    const status = document.getElementById("status-text");
-    const img = document.getElementById("studio-logo");
-    const debug = document.getElementById("debug-msg");
-    const lore = document.getElementById("lore-overlay");
-
-    // LORE LOGIC
-    const LORE_KEY = "nx_lore_seen_v1";
-    
-    function checkLore() {
-        if(!localStorage.getItem(LORE_KEY)) {
-            lore.style.display = "flex";
-        }
-    }
-    
-    function closeLore() {
-        localStorage.setItem(LORE_KEY, "true");
-        lore.style.opacity = "0";
-        setTimeout(() => lore.style.display = "none", 500);
-    }
-    
-    // Check immediately
-    checkLore();
-
-    function recoverData() {
-        const code = prompt("PASTE RECOVERY CODE:");
-        if(code && window.SaveSys) SaveSys.importData(code);
-        else if (code) alert("Save System not loaded.");
-    }
-
-    img.onerror = function() {
-        debug.style.display = "block";
-        debug.innerHTML = "ERROR: Image not found.<br>Checked: assets/LogoSyncStudios.png";
-        this.style.background = "#334155";
-    };
-
-    btn.onclick = () => {
-      // If Lore is open, close it first
-      if (window.getComputedStyle(lore).display === "flex") {
-          closeLore();
-          return;
-      }
-        
+    function enterWorld() {
+      const btn = document.getElementById("init-btn");
+      const status = document.getElementById("status-text");
       btn.style.backgroundColor = "#fff";
       btn.style.color = "#000";
       status.style.color = "#0ea5e9";
       status.textContent = "ESTABLISHING CONNECTION...";
-      
-      setTimeout(() => {
-        window.location.href = "map.html";
-      }, 400);
-    };
+      setTimeout(() => { window.location.href = "map.html"; }, 400);
+    }
   </script>
 </body>
 </html>

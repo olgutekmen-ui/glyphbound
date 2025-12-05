@@ -5,27 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Glyphbound: Depot</title> <link rel="stylesheet" href="style.css" />
   <style>
-    /* LOCAL SHOP STYLES */
+    /* ... (Same CSS) ... */
     #shop-screen { padding: 1rem; max-width: 600px; margin: 0 auto; }
     .shop-header { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px); padding: 1rem; border-radius: 12px; border: 1px solid #334155; margin-bottom: 1.5rem; }
     .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 2rem; }
     .shop-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.2s, border-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
     .shop-card:hover { transform: translateY(-5px); }
-    .shop-card.combat { border-top: 3px solid #ef4444; } .shop-card.combat:hover { border-color: #f87171; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
-    .shop-card.resource { border-top: 3px solid #38bdf8; } .shop-card.resource:hover { border-color: #7dd3fc; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
     
-    /* NEW: REAL MONEY STYLE */
+    .shop-card.artifact { border-top: 3px solid #a855f7; background: linear-gradient(145deg, #2e1065, #0f172a); }
+    .shop-card.artifact:hover { border-color: #d8b4fe; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+
     .shop-card.iap { border-top: 3px solid #eab308; background: linear-gradient(145deg, #422006, #1e1b4b); }
     .shop-card.iap:hover { border-color: #facc15; box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
-    .iap-price { background: #eab308; color: #000; font-weight: 800; padding: 4px 10px; border-radius: 4px; margin-top: 5px; }
+    .shop-card.combat { border-top: 3px solid #ef4444; }
+    .shop-card.resource { border-top: 3px solid #38bdf8; }
     
     .item-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
     .item-title { font-weight: 800; color: #fff; font-size: 0.9rem; margin-bottom: 4px; letter-spacing: 1px;}
     .item-desc { color: #94a3b8; font-size: 0.7rem; margin-bottom: 10px; min-height: 32px; }
     .item-stock { font-size: 0.75rem; color: #fff; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px; margin-bottom: 8px;}
+    
     .buy-btn { background: #0f172a; border: 1px solid #475569; color: #38bdf8; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%; transition: all 0.2s; }
     .buy-btn:hover { background: #38bdf8; color: #000; }
     .buy-btn.real { color: #facc15; border-color: #ca8a04; } .buy-btn.real:hover { background: #facc15; }
+    .buy-btn.art { color: #d8b4fe; border-color: #7e22ce; } .buy-btn.art:hover { background: #d8b4fe; color:#000; }
+    
     .section-label { color: #94a3b8; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
   </style>
 </head>
@@ -37,53 +41,45 @@
 
   <div id="map-currencies" style="margin-bottom:2rem;">
       <div class="currency" style="border-color:#facc15; color:#facc15">⚡ <span id="energy-amt">--</span></div>
-      <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">💎 <span id="prisma-amt">--</span></div>
-      <div class="currency" style="border-color:#f472b6; color:#f472b6">🪙 <span id="aurum-amt">--</span></div>
+      <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">🪙 <span id="prisma-amt">--</span></div>
+      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img"> <span id="aurum-amt">--</span></div>
+  </div>
+
+  <div class="section-label" style="color:#a855f7;">BLACK MARKET (ARTIFACTS)</div>
+  <div class="shop-grid">
+    <div class="shop-card artifact">
+      <div class="item-icon">🔮</div>
+      <div class="item-title">DATA CACHE</div>
+      <div class="item-desc">Contains 1 Random Passive Artifact.<br>(Common to Mythic)</div>
+      <button class="buy-btn art" onclick="buyArtifact()">5 <img src="assets/aurum.jpg" class="currency-img"></button>
+    </div>
   </div>
 
   <div class="section-label">AURUM BUNDLES (SECURE LINK)</div>
   <div class="shop-grid">
-    <div class="shop-card iap">
-      <div class="item-icon">📦</div>
-      <div class="item-title">1 MB CACHE</div>
-      <div class="item-desc">Starter pack. 2 Aurum immediately.</div>
-      <button class="buy-btn real" onclick="buyReal('starter')">$1.99</button>
-    </div>
-    <div class="shop-card iap">
-      <div class="item-icon">💳</div>
-      <div class="item-title">10 MB PASS</div>
-      <div class="item-desc">5 Aurum Now + 2 Daily for 30 Days.</div>
-      <button class="buy-btn real" onclick="buyReal('pass')">$4.99</button>
-    </div>
-    <div class="shop-card iap">
-      <div class="item-icon">💾</div>
-      <div class="item-title">100 MB DATA</div>
-      <div class="item-desc">Pro Pack. 12 Aurum (20% Bonus).</div>
-      <button class="buy-btn real" onclick="buyReal('medium')">$9.99</button>
-    </div>
-    <div class="shop-card iap">
-      <div class="item-icon">💎</div>
-      <div class="item-title">1 TB DUMP</div>
-      <div class="item-desc">Whale Pack. 65 Aurum (MEGA VALUE).</div>
-      <button class="buy-btn real" onclick="buyReal('whale')">$49.99</button>
-    </div>
+    <div class="shop-card iap"><div class="item-icon">📦</div><div class="item-title">1 MB CACHE</div><div class="item-desc">Starter pack. 2 Aurum immediately.</div><button class="buy-btn real" onclick="buyReal('starter')">$1.99</button></div>
+    <div class="shop-card iap"><div class="item-icon">💳</div><div class="item-title">10 MB PASS</div><div class="item-desc">5 Aurum Now + 2 Daily for 30 Days.</div><button class="buy-btn real" onclick="buyReal('pass')">$4.99</button></div>
+    <div class="shop-card iap"><div class="item-icon">💾</div><div class="item-title">100 MB DATA</div><div class="item-desc">Pro Pack. 12 Aurum (20% Bonus).</div><button class="buy-btn real" onclick="buyReal('medium')">$9.99</button></div>
+    <div class="shop-card iap"><div class="item-icon">💎</div><div class="item-title">1 TB DUMP</div><div class="item-desc">Whale Pack. 65 Aurum (MEGA VALUE).</div><button class="buy-btn real" onclick="buyReal('whale')">$49.99</button></div>
   </div>
 
   <div class="section-label">Combat Consumables</div>
   <div class="shop-grid">
-    <div class="shop-card combat"><div class="item-icon">💣</div><div class="item-title">BOMB</div><div class="item-desc">Destroy 5 random tiles. Clears hazards.</div><div class="item-stock">OWNED: <span id="stock-bomb">0</span></div><button class="buy-btn" onclick="doAction('buyBomb')">30 💎</button></div>
-    <div class="shop-card combat"><div class="item-icon">⏳</div><div class="item-title">HOURGLASS</div><div class="item-desc">Extends mission time. +5 Moves.</div><div class="item-stock">OWNED: <span id="stock-hourglass">0</span></div><button class="buy-btn" onclick="doAction('buyHourglass')">40 💎</button></div>
-    <div class="shop-card combat"><div class="item-icon">🧪</div><div class="item-title">ANTIDOTE</div><div class="item-desc">Neutralizes all Poison on the board.</div><div class="item-stock">OWNED: <span id="stock-antidote">0</span></div><button class="buy-btn" onclick="doAction('buyAntidote')">20 💎</button></div>
+    <div class="shop-card combat"><div class="item-icon">💣</div><div class="item-title">BOMB</div><div class="item-desc">Destroy 5 random tiles. Clears hazards.</div><div class="item-stock">OWNED: <span id="stock-bomb">0</span></div><button class="buy-btn" onclick="doAction('buyBomb')">30 🪙</button></div>
+    <div class="shop-card combat"><div class="item-icon">⏳</div><div class="item-title">HOURGLASS</div><div class="item-desc">Extends mission time. +5 Moves.</div><div class="item-stock">OWNED: <span id="stock-hourglass">0</span></div><button class="buy-btn" onclick="doAction('buyHourglass')">40 🪙</button></div>
+    <div class="shop-card combat"><div class="item-icon">🧪</div><div class="item-title">ANTIDOTE</div><div class="item-desc">Neutralizes all Poison on the board.</div><div class="item-stock">OWNED: <span id="stock-antidote">0</span></div><button class="buy-btn" onclick="doAction('buyAntidote')">20 🪙</button></div>
   </div>
 
   <div class="section-label">Logistics</div>
   <div class="shop-grid">
-    <div class="shop-card resource"><div class="item-icon">⚡</div><div class="item-title">RECHARGE</div><div class="item-desc">Restores +1 Energy immediately.</div><button class="buy-btn" onclick="doAction('buyEnergy')">50 💎</button></div>
-    <div class="shop-card resource"><div class="item-icon">💎</div><div class="item-title">EXCHANGE</div><div class="item-desc">Trade 1 Aurum for <span style="color:#38bdf8; font-weight:bold;">100 Prisma</span>.</div><button class="buy-btn" onclick="doAction('convertAurum')">1 🪙</button></div>
+    <div class="shop-card resource"><div class="item-icon">⚡</div><div class="item-title">RECHARGE</div><div class="item-desc">Restores +1 Energy immediately.</div><button class="buy-btn" onclick="doAction('buyEnergy')">50 🪙</button></div>
+    <div class="shop-card resource"><div class="item-icon">💎</div><div class="item-title">EXCHANGE</div><div class="item-desc">Trade 1 Aurum for <span style="color:#38bdf8; font-weight:bold;">100 Prisma</span>.</div>
+    <button class="buy-btn" onclick="doAction('convertAurum')">1 <img src="assets/aurum.jpg" class="currency-img"></button></div>
     <div class="shop-card resource"><div class="item-icon">📺</div><div class="item-title">SIGNAL</div><div class="item-desc">Watch ad stream for +3 Energy.</div><button class="buy-btn" onclick="doAction('watchAd')">FREE</button></div>
   </div>
 
-  <script src="economy.js"></script>
+  <script src="economy.js?v=3.5"></script>
+  <script src="artifacts.js?v=3.5"></script> 
   <script>
     function updateUI() {
       economy.regenerateEnergy();
@@ -95,6 +91,18 @@
       document.getElementById("stock-antidote").textContent = economy.getItemCount('antidote');
     }
 
+    function buyArtifact() {
+        if (!window.Artifacts) return alert("System Offline");
+        const result = Artifacts.pull(5);
+        if (result.success) {
+            const item = result.item;
+            alert(`DECRYPTION COMPLETE!\n\nACQUIRED: [ ${item.name} ]\nRARITY: ${item.rarity.toUpperCase()}\nEFFECT: ${item.text}`);
+            updateUI();
+        } else {
+            alert(result.msg);
+        }
+    }
+
     function buyReal(pack) {
         let cost = ""; let grant = 0; let name = "";
         if(pack === 'starter') { cost="$1.99"; grant=2; name="1 MB CACHE"; }
@@ -104,12 +112,8 @@
 
         if(confirm(`[SIMULATION]\nPurchase ${name} for ${cost}?\n(No real money will be charged)`)) {
             alert("Processing Payment... [||||||||||]");
-            if(pack === 'pass') {
-                economy.activateSupplyPass();
-            } else {
-                economy.addAurum(grant);
-                alert(`PAYMENT SUCCESSFUL!\n+${grant} Aurum added to account.`);
-            }
+            if(pack === 'pass') { economy.activateSupplyPass(); } 
+            else { economy.addAurum(grant); alert(`PAYMENT SUCCESSFUL!\n+${grant} Aurum added to account.`); }
             updateUI();
         }
     }

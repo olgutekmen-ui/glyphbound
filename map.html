@@ -5,34 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Glyphbound: Sector Map</title> <link rel="stylesheet" href="style.css" />
   <style>
-    /* ... (Keep your existing CSS) ... */
-    
-    /* NEW: Notification Dot */
-    .notify-badge {
-        position: absolute; top: -5px; right: -5px; width: 12px; height: 12px;
-        background: #ef4444; border-radius: 50%; border: 2px solid #0f172a;
-        box-shadow: 0 0 5px #ef4444;
-    }
+    /* ... (CSS same as previous) ... */
+    .zone-tabs-container { display: flex; justify-content: flex-start; gap: 5px; padding: 10px; margin-bottom: 1rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; background: rgba(0,0,0,0.2); border-bottom: 1px solid #334155; }
+    .zone-tabs-container::-webkit-scrollbar { height: 4px; } .zone-tabs-container::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+    .zone-tab { flex: 0 0 auto; min-width: 80px; text-align: center; }
+    .notify-badge { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; border: 2px solid #0f172a; box-shadow: 0 0 5px #ef4444; }
     .nav-btn { position: relative; }
-
-    #data-modal {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(2, 6, 23, 0.95); z-index: 10000;
-        display: none; flex-direction: column; align-items: center; justify-content: center;
-    }
-    #data-box {
-        background: #0f172a; border: 1px solid #334155; padding: 2rem;
-        border-radius: 12px; width: 90%; max-width: 400px; text-align: center;
-        box-shadow: 0 0 30px rgba(0,0,0,0.5);
-    }
-    .data-textarea {
-        width: 100%; height: 100px; background: #020617; border: 1px solid #1e293b;
-        color: #38bdf8; font-family: monospace; font-size: 0.8rem; padding: 10px;
-        margin: 10px 0; resize: none; word-break: break-all;
-    }
-    .data-btn {
-        width: 48%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none;
-    }
+    #data-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    #data-box { background: #0f172a; border: 1px solid #334155; padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+    .data-textarea { width: 100%; height: 100px; background: #020617; border: 1px solid #1e293b; color: #38bdf8; font-family: monospace; font-size: 0.8rem; padding: 10px; margin: 10px 0; resize: none; word-break: break-all; }
+    .data-btn { width: 48%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; border: none; }
     .btn-save { background: #38bdf8; color: #000; }
     .btn-load { background: #334155; color: #fff; border: 1px solid #475569; }
   </style>
@@ -56,8 +38,8 @@
     
     <div id="map-currencies">
       <div class="currency" style="border-color:#facc15; color:#facc15">⚡ <span id="energy-amt">--</span></div>
-      <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">💎 <span id="prisma-amt">--</span></div>
-      <div class="currency" style="border-color:#f472b6; color:#f472b6">🪙 <span id="aurum-amt">--</span></div>
+      <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">🪙 <span id="prisma-amt">--</span></div>
+      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img"> <span id="aurum-amt">--</span></div>
       <div style="color:#64748b; margin-left:8px; display:flex; align-items:center;">
         REGEN: <span id="energy-timer" style="margin-left:4px; color:#fff;">--:--</span>
       </div>
@@ -91,36 +73,21 @@
       </div>
   </div>
 
-  <script src="state.js?v=3.0"></script>
-  <script src="economy.js?v=3.0"></script>
-  <script src="levels.js?v=3.0"></script>
-  <script src="audio.js?v=3.0"></script>
-  <script src="save_system.js?v=3.0"></script> 
-  <script src="quests.js?v=3.0"></script> 
+  <script src="state.js?v=3.5"></script>
+  <script src="economy.js?v=3.5"></script>
+  <script src="levels.js?v=3.5"></script>
+  <script src="audio.js?v=3.5"></script>
+  <script src="save_system.js?v=3.5"></script> 
+  <script src="quests.js?v=3.5"></script> 
   
   <script>
-    function openDataMenu() {
-        document.getElementById('data-modal').style.display = 'flex';
-        document.getElementById('save-string').value = ""; 
-    }
-    function generateSave() {
-        if(!window.SaveSys) return alert("System Loading...");
-        const code = SaveSys.exportData();
-        const area = document.getElementById('save-string');
-        area.value = code; area.select(); document.execCommand('copy'); 
-        alert("CODE COPIED TO CLIPBOARD!");
-    }
-    function loadSave() {
-        if(!window.SaveSys) return alert("System Loading...");
-        const code = document.getElementById('save-string').value.trim();
-        if(!code) return alert("Please paste a code first.");
-        if(confirm("Overwrite current progress?")) { SaveSys.importData(code); }
-    }
+    function openDataMenu() { document.getElementById('data-modal').style.display = 'flex'; document.getElementById('save-string').value = ""; }
+    function generateSave() { if(!window.SaveSys) return alert("System Loading..."); const code = SaveSys.exportData(); const area = document.getElementById('save-string'); area.value = code; area.select(); document.execCommand('copy'); alert("CODE COPIED TO CLIPBOARD!"); }
+    function loadSave() { if(!window.SaveSys) return alert("System Loading..."); const code = document.getElementById('save-string').value.trim(); if(!code) return alert("Please paste a code first."); if(confirm("Overwrite current progress?")) { SaveSys.importData(code); } }
 
-    // MAIN INIT
     (function() {
-      // 1. ZONES SETUP
-      const ZONES = ["OUTSKIRTS", "INDUSTRIAL", "ECO-SECTOR", "HIGH-TECH", "CORE"];
+      const BASE_NAMES = ["OUTSKIRTS", "INDUSTRIAL", "ECO-SECTOR", "HIGH-TECH", "CORE"];
+      const SUFFIXES = ["ALPHA", "BETA", "GAMMA", "DELTA"];
       const allLevels = window.LEVELS || [];
       const unlocked = parseInt(localStorage.getItem("levelUnlocked") || "1", 10);
       const tabsEl = document.getElementById("zone-tabs");
@@ -129,14 +96,21 @@
 
       if (window.AudioSys) AudioSys.playBGM('bgm_map');
 
-      const zoneData = [[], [], [], [], []];
+      const zoneData = Array.from({length: 20}, () => []);
       allLevels.forEach(l => {
         const zIndex = Math.floor((l.id - 1) / 10);
         if(zoneData[zIndex]) zoneData[zIndex].push(l);
       });
 
-      ZONES.forEach((name, i) => {
-        const tab = document.createElement("div"); tab.className = "zone-tab"; tab.innerText = `Z${i+1}: ${name}`;
+      const GENERATED_NAMES = [];
+      for(let i=0; i<20; i++) {
+          const b = BASE_NAMES[i%5];
+          const s = SUFFIXES[Math.floor(i/5)];
+          GENERATED_NAMES.push(`${b} ${s}`);
+      }
+
+      GENERATED_NAMES.forEach((name, i) => {
+        const tab = document.createElement("div"); tab.className = "zone-tab"; tab.innerText = `Z${i+1}`;
         tab.onclick = () => switchZone(i); tabsEl.appendChild(tab);
         const container = document.createElement("div"); container.className = "zone-content";
         const grid = document.createElement("div"); grid.className = "hex-grid";
@@ -160,29 +134,24 @@
       });
 
       function switchZone(idx) {
-        document.querySelectorAll(".zone-tab").forEach((t, i) => t.classList.toggle("active", i === idx));
+        document.querySelectorAll(".zone-tab").forEach((t, i) => { t.classList.toggle("active", i === idx); if(i === idx) t.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"}); });
         document.querySelectorAll(".zone-content").forEach((c, i) => c.classList.toggle("active", i === idx));
-        document.querySelectorAll(".radar-ring").forEach((r, i) => r.classList.toggle("active", i === idx));
-        zoneNameEl.innerText = ZONES[idx];
+        zoneNameEl.innerText = GENERATED_NAMES[idx];
       }
-      let currentZoneIdx = Math.floor((unlocked - 1) / 10); if(currentZoneIdx > 4) currentZoneIdx = 4;
+      let currentZoneIdx = Math.floor((unlocked - 1) / 10); if(currentZoneIdx >= 20) currentZoneIdx = 19;
       switchZone(currentZoneIdx);
 
-      // 2. HUD UPDATER
       function updateHUD() {
         if(!window.economy) return;
         economy.regenerateEnergy();
         document.getElementById("energy-amt").textContent = economy.getEnergy();
         document.getElementById("prisma-amt").textContent = economy.getPrisma();
         document.getElementById("aurum-amt").textContent = economy.getAurum();
-        
-        // CHECK QUEST STATUS FOR BADGE
         if (window.Quests && Quests.data) {
              const badge = document.getElementById("quest-badge");
              const canClaim = Quests.data.progress >= Quests.data.target && !Quests.data.claimed;
              if(badge) badge.style.display = canClaim ? "block" : "none";
         }
-        
         const el = document.getElementById("energy-timer");
         if(economy.getEnergy() >= economy.maxEnergy) { el.textContent = "MAX"; } else {
            const last = parseInt(localStorage.getItem(economy.LS_KEYS.lastEnergyAt)||Date.now());
@@ -194,13 +163,11 @@
       }
       setInterval(updateHUD, 1000); updateHUD();
 
-      // 3. AUTO-OPEN QUEST LOG
       setTimeout(() => {
         const LAST_SEEN_KEY = "nx_quest_log_seen_date_v2";
         const today = new Date().toDateString();
         const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
         if (window.Quests) {
-            // Open if new day OR if reward available
             const rewardReady = (Quests.data && Quests.data.progress >= Quests.data.target && !Quests.data.claimed);
             if (lastSeen !== today || rewardReady) {
                 Quests.openLog();

@@ -1,11 +1,10 @@
-/* board.js — V3.0 (SYNCED WITH NEW ABILITY COSTS) */
+/* board.js — V3.3 (COMBO KILL SWITCH) */
 (function () {
   const GS = window.gameState || (window.gameState = {});
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   function randInt(n) { return Math.floor(Math.random() * n); }
   function makeGlyphCell(type) { return { kind: "glyph", type }; }
-  
   function isGlyph(cell) { return cell && cell.kind === "glyph"; }
   function isPoison(cell) { return cell && cell.kind === "poison"; }
   function isFrozen(cell) { return cell && cell.kind === "frozen"; }
@@ -105,10 +104,12 @@
     let safeguard = 0;
     let comboStreak = 0;
 
-    // Grab Costs from Ability module or fallback
     const COSTS = window.ABILITY_COSTS || { aelia:20, nocta:25, vyra:30, iona:35 };
 
     while (!stable && safeguard < 20) {
+        // KILL SWITCH 1: If game ended (Time/Moves/Kill), stop processing immediately
+        if (GS.victoryTriggered) break;
+
         applyGravityAndRefill();
         if (window.UI && UI.renderBoard) UI.renderBoard();
         if (safeguard > 0) await delay(300);
@@ -124,6 +125,10 @@
             stable = true;
         } else {
             stable = false;
+            
+            // KILL SWITCH 2: Double check before playing FX
+            if (GS.victoryTriggered) break;
+
             try { 
                 if(window.AudioSys && AudioSys.play) {
                     const pitchMult = 1.0 + (comboStreak * 0.15);
@@ -142,19 +147,31 @@
 
             const uniqueMatches = matchedSet.size; 
             if (window.Abilities && window.Abilities.applyHeroDamage) {
-                const baseDmg = 50;
+                // ARTIFACT HOOKS
+                let dmgMult = 1.0;
+                let chgMult = 1.0;
+                if (window.Artifacts) {
+                    dmgMult = Artifacts.getDamageMult();
+                    chgMult = Artifacts.getChargeMult();
+                }
+                
+                const baseDmg = 50 * dmgMult; 
                 const multiplier = 1 + (comboStreak * 0.1); 
                 const dmg = Math.floor((uniqueMatches / 3) * baseDmg * multiplier);
+                
                 window.Abilities.applyHeroDamage("board", dmg);
                 if (window.FX) FX.showDamage(dmg);
                 
-                // --- UPDATED CHARGE LOGIC ---
-                // Uses dynamic COSTS constants
-                GS.aeliaCharge = Math.min(COSTS.aelia, GS.aeliaCharge + (uniqueMatches > 3 ? 2 : 1));
-                GS.noctaCharge = Math.min(COSTS.nocta, GS.noctaCharge + 1);
-                GS.vyraCharge = Math.min(COSTS.vyra, GS.vyraCharge + 1);
-                GS.ionaCharge = Math.min(COSTS.iona, GS.ionaCharge + 1);
+                // Charge Heroes
+                const chgBonus = (uniqueMatches > 3 ? 2 : 1) * chgMult;
+                GS.aeliaCharge = Math.min(COSTS.aelia, GS.aeliaCharge + chgBonus);
+                GS.noctaCharge = Math.min(COSTS.nocta, GS.noctaCharge + (1 * chgMult));
+                GS.vyraCharge = Math.min(COSTS.vyra, GS.vyraCharge + (1 * chgMult));
+                GS.ionaCharge = Math.min(COSTS.iona, GS.ionaCharge + (1 * chgMult));
             }
+
+            // KILL SWITCH 3: If damage killed the boss, stop the cascade visual updates
+            if (GS.victoryTriggered) break;
 
             matchedSet.forEach(key => {
                 const [r, c] = key.split(',').map(Number);
@@ -177,8 +194,12 @@
             safeguard++;
         }
     }
-    spreadHazards();
-    if (window.UI && UI.renderBoard) UI.renderBoard();
+    
+    // Only spread hazards if game is still active
+    if (!GS.victoryTriggered) {
+        spreadHazards();
+        if (window.UI && UI.renderBoard) UI.renderBoard();
+    }
   }
 
   function spreadHazards() {

@@ -1,4 +1,4 @@
-/* engine.js — V2.1 (QUEST HOOKS) */
+/* engine.js — V3.0 (ARTIFACT START BONUSES) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -63,12 +63,10 @@
     if(timerInterval) clearInterval(timerInterval);
     if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
 
-    // --- QUEST HOOK ---
     if(window.Quests) {
-        Quests.report('win_level'); // Day 1 & 5
-        Quests.report('kill_boss', GS.currentLevelId); // Day 7
+        Quests.report('win_level'); 
+        Quests.report('kill_boss', GS.currentLevelId); 
     }
-    // ------------------
 
     const reward = 20 + (GS.movesLeft * 2);
     if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
@@ -184,10 +182,20 @@
     GS.discipleHP = GS.discipleMaxHP;
     GS.discipleAttackRate = lvl.attackRate || 3; 
     GS.GRID_SIZE = 9;
-    GS.movesLeft = lvl.moves || 25;
+    
+    // --- ARTIFACT HOOK (Start Bonuses) ---
+    let extraMoves = 0;
+    let startCharge = 0;
+    if (window.Artifacts) {
+        extraMoves = Artifacts.getMoveBonus();
+        startCharge = Artifacts.getStartCharge();
+    }
+    GS.movesLeft = (lvl.moves || 25) + extraMoves;
+    GS.aeliaCharge=startCharge; GS.noctaCharge=startCharge; GS.vyraCharge=startCharge; GS.ionaCharge=startCharge;
+    // -------------------------------------
+
     GS.score = 0;
     GS.turnsTaken = 0;
-    GS.aeliaCharge=0; GS.noctaCharge=0; GS.vyraCharge=0; GS.ionaCharge=0;
     GS.isProcessing = false;
     GS.victoryTriggered = false;
     GS.timeLeft = 0; 

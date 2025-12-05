@@ -1,18 +1,30 @@
-/* abilities.js — V3.0 (NERFED CHARGE COSTS) */
+/* abilities.js — V3.2 (ARTIFACT COST REDUCTION WIRED) */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
   const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
 
-  // --- CONFIGURABLE COSTS ---
-  // Increased to prevent spamming in early levels
+  // --- ARTIFACT INTEGRATION ---
+  let reduction = 0;
+  // Check if Artifacts system is loaded and ready
+  if (window.Artifacts && typeof Artifacts.getCostReduction === 'function') {
+      reduction = Artifacts.getCostReduction();
+      // Console log for debugging
+      if(reduction > 0) console.log("NEURAL NETWORK ACTIVE: -" + (reduction*100) + "% Ability Cost");
+  }
+
+  // BASE COSTS (Doubled from original)
+  const BASE_COSTS = { aelia: 20, nocta: 25, vyra: 30, iona: 35 };
+
+  // APPLY REDUCTION (Floor to integer)
   const COSTS = {
-      aelia: 20, // Was 10
-      nocta: 25, // Was 12
-      vyra:  30, // Was 15
-      iona:  35  // Was 15
+      aelia: Math.floor(BASE_COSTS.aelia * (1 - reduction)),
+      nocta: Math.floor(BASE_COSTS.nocta * (1 - reduction)),
+      vyra:  Math.floor(BASE_COSTS.vyra * (1 - reduction)),
+      iona:  Math.floor(BASE_COSTS.iona * (1 - reduction))
   };
-  // Expose for UI/Board to see
+
+  // EXPOSE TO WINDOW FOR UI/BOARD
   window.ABILITY_COSTS = COSTS;
 
   function updateStatsSync() {
@@ -65,7 +77,14 @@
       });
       await delay(150);
       cellsToClear.forEach(({ r, c }) => GS.board[r][c] = null);
-      if (window.Board && window.Board.processBoardUntilStable) await window.Board.processBoardUntilStable();
+      if (window.Board && window.Board.forceFill) {
+          window.Board.forceFill(); 
+          if (window.UI && UI.renderBoard) UI.renderBoard(); 
+          await delay(100); 
+      }
+      if (window.Board && window.Board.processBoardUntilStable) {
+          await window.Board.processBoardUntilStable();
+      }
   }
 
   async function activateAelia() {
