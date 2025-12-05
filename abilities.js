@@ -1,4 +1,4 @@
-/* abilities.js — V3.3 (DYNAMIC LEVEL SCALING + ARTIFACT SYNERGY) */
+/* abilities.js — V3.4 (AELIA SCALING FIX) */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
@@ -21,14 +21,14 @@
 
   window.ABILITY_COSTS = COSTS;
 
-  // --- NEW: DAMAGE SCALING CALCULATOR ---
+  // --- DAMAGE SCALING CALCULATOR ---
   function getScaledDamage(base, growth) {
       const lvl = GS.currentLevelId || 1;
       
-      // 1. Calculate Level-Based Damage
+      // 1. Level Scaling
       let dmg = base + (lvl * growth);
       
-      // 2. Apply Artifact Multipliers (Synergy)
+      // 2. Artifact Multiplier
       let mult = 1.0;
       if (window.Artifacts && typeof Artifacts.getDamageMult === 'function') {
           mult = Artifacts.getDamageMult();
@@ -57,7 +57,6 @@
     updateStatsSync();
 
     if (window.FX) {
-        // Shake screen harder for big hits (scaled to level)
         if (actual > (GS.discipleMaxHP * 0.1)) { FX.shake(2); FX.showDamage(actual, true); }
         else { FX.showDamage(actual); }
     }
@@ -98,7 +97,7 @@
       }
   }
 
-  // --- HERO LOGIC UPDATED WITH SCALING ---
+  // --- HERO LOGIC ---
 
   async function activateAelia() {
     if (GS.isProcessing || GS.aeliaCharge < COSTS.aelia) return;
@@ -106,10 +105,14 @@
     resetCharge("aelia");
     GS.isProcessing = true;
     try {
-      // SCALING: Starts at ~900 (Lvl 1). Reaches ~17,000 (Lvl 200).
-      // Base: 800, Growth: 80 per level.
+      // FIX APPLIED HERE:
+      // Base: 800 + (Lvl * 80). At Lvl 1 = 880 dmg.
       const dmg = getScaledDamage(800, 80);
+      
+      // PREVIOUS ERROR: applyHeroDamage("aelia", 2500); 
+      // CORRECTED:
       const isDead = applyHeroDamage("aelia", dmg); 
+      
       if (isDead) return;
       const row = Math.floor(Math.random() * GS.GRID_SIZE);
       const toClear = [];
@@ -124,7 +127,6 @@
     resetCharge("nocta");
     GS.isProcessing = true;
     try {
-      // SCALING: Starts at ~550. Reaches ~10,500.
       const dmg = getScaledDamage(500, 50);
       applyHeroDamage("nocta", dmg); 
       const N = GS.GRID_SIZE; const candidates = [];
@@ -141,7 +143,6 @@
     resetCharge("iona");
     GS.isProcessing = true;
     try {
-      // SCALING: Utility focused. Starts ~390.
       const dmg = getScaledDamage(350, 40);
       const isDead = applyHeroDamage("iona", dmg);
       if (isDead) return;
@@ -161,7 +162,6 @@
     resetCharge("vyra");
     GS.isProcessing = true;
     try {
-      // SCALING: Utility focused. Starts ~390.
       const dmg = getScaledDamage(350, 40);
       const isDead = applyHeroDamage("vyra", dmg); 
       if (isDead) return;
