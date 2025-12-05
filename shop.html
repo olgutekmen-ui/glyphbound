@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Glyphbound: Depot</title> <link rel="stylesheet" href="style.css" />
   <style>
-    /* ... (Same CSS) ... */
+    /* ... (CSS Unchanged) ... */
     #shop-screen { padding: 1rem; max-width: 600px; margin: 0 auto; }
     .shop-header { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(5px); padding: 1rem; border-radius: 12px; border: 1px solid #334155; margin-bottom: 1.5rem; }
     .shop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 2rem; }
@@ -14,7 +14,6 @@
     
     .shop-card.artifact { border-top: 3px solid #a855f7; background: linear-gradient(145deg, #2e1065, #0f172a); }
     .shop-card.artifact:hover { border-color: #d8b4fe; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
-
     .shop-card.iap { border-top: 3px solid #eab308; background: linear-gradient(145deg, #422006, #1e1b4b); }
     .shop-card.iap:hover { border-color: #facc15; box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
     .shop-card.combat { border-top: 3px solid #ef4444; }
@@ -29,7 +28,6 @@
     .buy-btn:hover { background: #38bdf8; color: #000; }
     .buy-btn.real { color: #facc15; border-color: #ca8a04; } .buy-btn.real:hover { background: #facc15; }
     .buy-btn.art { color: #d8b4fe; border-color: #7e22ce; } .buy-btn.art:hover { background: #d8b4fe; color:#000; }
-    
     .section-label { color: #94a3b8; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
   </style>
 </head>
@@ -42,7 +40,7 @@
   <div id="map-currencies" style="margin-bottom:2rem;">
       <div class="currency" style="border-color:#facc15; color:#facc15">⚡ <span id="energy-amt">--</span></div>
       <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">🪙 <span id="prisma-amt">--</span></div>
-      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img"> <span id="aurum-amt">--</span></div>
+      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img" width="20" height="20" style="width:20px; height:20px; border-radius:50%; vertical-align:middle;"> <span id="aurum-amt">--</span></div>
   </div>
 
   <div class="section-label" style="color:#a855f7;">BLACK MARKET (ARTIFACTS)</div>
@@ -51,7 +49,7 @@
       <div class="item-icon">🔮</div>
       <div class="item-title">DATA CACHE</div>
       <div class="item-desc">Contains 1 Random Passive Artifact.<br>(Common to Mythic)</div>
-      <button class="buy-btn art" onclick="buyArtifact()">5 <img src="assets/aurum.jpg" class="currency-img"></button>
+      <button class="buy-btn art" onclick="buyArtifact()">5 <img src="assets/aurum.jpg" class="currency-img" width="16" height="16" style="vertical-align:middle;"></button>
     </div>
   </div>
 
@@ -73,8 +71,9 @@
   <div class="section-label">Logistics</div>
   <div class="shop-grid">
     <div class="shop-card resource"><div class="item-icon">⚡</div><div class="item-title">RECHARGE</div><div class="item-desc">Restores +1 Energy immediately.</div><button class="buy-btn" onclick="doAction('buyEnergy')">50 🪙</button></div>
-    <div class="shop-card resource"><div class="item-icon">💎</div><div class="item-title">EXCHANGE</div><div class="item-desc">Trade 1 Aurum for <span style="color:#38bdf8; font-weight:bold;">100 Prisma</span>.</div>
-    <button class="buy-btn" onclick="doAction('convertAurum')">1 <img src="assets/aurum.jpg" class="currency-img"></button></div>
+    
+    <div class="shop-card resource"><div class="item-icon">💎</div><div class="item-title">EXCHANGE</div><div class="item-desc">Trade 1 Aurum for <span style="color:#38bdf8; font-weight:bold;">100 Prisma</span>.</div><button class="buy-btn" onclick="doAction('convertAurum')">1 <img src="assets/aurum.jpg" class="currency-img" width="16" height="16" style="vertical-align:middle;"></button></div>
+    
     <div class="shop-card resource"><div class="item-icon">📺</div><div class="item-title">SIGNAL</div><div class="item-desc">Watch ad stream for +3 Energy.</div><button class="buy-btn" onclick="doAction('watchAd')">FREE</button></div>
   </div>
 
@@ -98,9 +97,7 @@
             const item = result.item;
             alert(`DECRYPTION COMPLETE!\n\nACQUIRED: [ ${item.name} ]\nRARITY: ${item.rarity.toUpperCase()}\nEFFECT: ${item.text}`);
             updateUI();
-        } else {
-            alert(result.msg);
-        }
+        } else { alert(result.msg); }
     }
 
     function buyReal(pack) {

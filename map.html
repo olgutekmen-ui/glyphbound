@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Glyphbound: Sector Map</title> <link rel="stylesheet" href="style.css" />
   <style>
-    /* ... (CSS same as previous) ... */
+    /* ... (Same CSS) ... */
     .zone-tabs-container { display: flex; justify-content: flex-start; gap: 5px; padding: 10px; margin-bottom: 1rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; background: rgba(0,0,0,0.2); border-bottom: 1px solid #334155; }
     .zone-tabs-container::-webkit-scrollbar { height: 4px; } .zone-tabs-container::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
     .zone-tab { flex: 0 0 auto; min-width: 80px; text-align: center; }
@@ -39,7 +39,7 @@
     <div id="map-currencies">
       <div class="currency" style="border-color:#facc15; color:#facc15">⚡ <span id="energy-amt">--</span></div>
       <div class="currency" style="border-color:#0ea5e9; color:#0ea5e9">🪙 <span id="prisma-amt">--</span></div>
-      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img"> <span id="aurum-amt">--</span></div>
+      <div class="currency" style="border-color:#f472b6; color:#f472b6"><img src="assets/aurum.jpg" class="currency-img" width="20" height="20" style="width:20px; height:20px; border-radius:50%; vertical-align:middle;"> <span id="aurum-amt">--</span></div>
       <div style="color:#64748b; margin-left:8px; display:flex; align-items:center;">
         REGEN: <span id="energy-timer" style="margin-left:4px; color:#fff;">--:--</span>
       </div>
@@ -88,6 +88,9 @@
     (function() {
       const BASE_NAMES = ["OUTSKIRTS", "INDUSTRIAL", "ECO-SECTOR", "HIGH-TECH", "CORE"];
       const SUFFIXES = ["ALPHA", "BETA", "GAMMA", "DELTA"];
+      const ZONE_NAMES = [];
+      for(let i=0; i<20; i++) { const base = BASE_NAMES[i % 5]; const suffix = SUFFIXES[Math.floor(i / 5)]; ZONE_NAMES.push(`${base} ${suffix}`); }
+
       const allLevels = window.LEVELS || [];
       const unlocked = parseInt(localStorage.getItem("levelUnlocked") || "1", 10);
       const tabsEl = document.getElementById("zone-tabs");

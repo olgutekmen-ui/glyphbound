@@ -1,4 +1,4 @@
-/* ui.js — V3.4 (TUTORIAL UPDATE + MOBILE SCROLL) */
+/* ui.js — V3.6 (FINAL TUTORIAL UPDATE) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const IS_GAME = window.location.pathname.includes("game.html");
@@ -6,75 +6,38 @@
 
   const TILE_IMAGES = ["assets/tile_aelia.png", "assets/tile_nocta.png", "assets/tile_vyra.png", "assets/tile_iona.png"];
   const HAZARD_IMAGES = { frozen: "assets/tile_deceit.png?v=104", poison: "assets/tile_plague.png?v=104", junk: "assets/tile_greed.png?v=104", lava: "assets/tile_lava.png?v=104" };
-  const TUTORIAL_KEY = "nx_tutorial_final_v4"; // Bumped version to force re-show
+  const TUTORIAL_KEY = "nx_tutorial_final_v4"; 
 
   function launchTutorial() {
       if(GS.isProcessing) { GS.isProcessing = false; if(window.UI && UI.updateAbilityUI) UI.updateAbilityUI(); }
       if(document.getElementById("tutorial-overlay")) return;
+      const overlay = document.createElement("div"); overlay.id = "tutorial-overlay";
+      overlay.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.98); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; padding: 1rem;`;
       
-      const overlay = document.createElement("div");
-      overlay.id = "tutorial-overlay";
-      // MOBILE FIX: align-items: flex-start to allow scrolling long content on short screens
-      overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(2, 6, 23, 0.98); z-index: 20000; 
-        display: flex; flex-direction: column; align-items: center; justify-content: center; 
-        color: #fff; text-align: center; padding: 1rem;
-      `;
-      
-      // MOBILE FIX: max-height: 90vh and overflow-y: auto
       overlay.innerHTML = `
         <div style="max-height: 90vh; overflow-y: auto; width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
             <h2 style="color:#38bdf8; margin-bottom:1rem; font-family:monospace; font-size: 1.8rem; margin-top:0;">COMBAT MANUAL</h2>
-            
             <div style="text-align:left; color:#ccc; line-height:1.5; width:100%; margin-bottom:1.5rem; font-family:sans-serif; font-size:0.85rem; padding: 0 10px;">
                 <p><strong>1. OBJECTIVE:</strong> Reduce Disciple HP to 0.</p>
                 <p><strong>2. MATCH 3:</strong> Swap tiles to deal damage.</p>
                 <p><strong>3. HERO SKILLS:</strong> Matches charge rings. Tap to unleash Ultimates!</p>
                 <p><strong>4. HAZARDS:</strong> Match NEXT to Poison/Lava to destroy them.</p>
-                <p><strong>5. LOGISTICS:</strong> Earn <strong>Prisma</strong> from victories. Buy Items in the Depot.</p>
+                <p><strong>5. LOGISTICS:</strong> Earn <strong>Prisma (🪙)</strong> from victories. Buy Items in the Depot.</p>
                 <p style="color:#facc15; border-top:1px solid #333; padding-top:10px;">
-                   <strong>6. DAILY OPS:</strong> Check <strong>QUESTS</strong> on the Map. Complete objectives to earn <strong>Aurum</strong> & rare supplies.
+                   <strong>6. DAILY OPS:</strong> Check <strong>QUESTS</strong> on the Map. Complete objectives to earn <strong>Aurum (💎)</strong> & rare supplies.
                 </p>
             </div>
-            
-            <button id="tut-close-btn" style="
-                padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); 
-                border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; 
-                font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5); margin-bottom: 20px;
-                flex-shrink: 0;
-            ">INITIALIZE LINK</button>
+            <button id="tut-close-btn" style="padding:1rem 3rem; background:linear-gradient(135deg, #0ea5e9, #2563eb); border:none; border-radius:4px; font-weight:bold; cursor:pointer; color:#fff; font-size:1.1rem; box-shadow: 0 0 15px rgba(14,165,233,0.5); margin-bottom: 20px; flex-shrink: 0;">INITIALIZE LINK</button>
         </div>
       `;
       document.body.appendChild(overlay);
-      
-      document.getElementById("tut-close-btn").onclick = () => { 
-          overlay.remove(); 
-          localStorage.setItem(TUTORIAL_KEY, "true"); 
-          if(UI.flashAlert) UI.flashAlert("SYSTEM READY", 1500); 
-      };
+      document.getElementById("tut-close-btn").onclick = () => { overlay.remove(); localStorage.setItem(TUTORIAL_KEY, "true"); if(UI.flashAlert) UI.flashAlert("SYSTEM READY", 1500); };
   }
   window.resetTutorial = launchTutorial;
 
   if (IS_GAME) {
-    window.renderBoard = renderBoard;
-    window.UI = window.UI || {};
-    window.UI.renderBoard = renderBoard;
-    window.UI.updateChibiUI = updateChibiUI;
-    window.UI.updateDiscipleBadge = updateDiscipleBadge;
-    window.UI.updateStats = updateStats;
-    window.UI.updateAbilityUI = updateAbilityUI;
-    window.UI.updateEnergyUI = updateEnergyUI;
-    window.UI.flashAlert = flashAlert;
-    window.UI.updatePrismaUI = updatePrismaUI;
-    window.UI.updateItemCounts = updateItemCounts;
-    window.UI.highlightTile = highlightTile;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      initAbilityIcons(); injectTutorialButton(); bindAbilityklClicks(); injectItemBar();
-      if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(launchTutorial, 1000);
-      setTimeout(() => { updateEnergyUI(); updatePrismaUI(); updateItemCounts(); if(GS.board) renderBoard(); }, 50);
-    });
+    window.renderBoard = renderBoard; window.UI = window.UI || {}; window.UI.renderBoard = renderBoard; window.UI.updateChibiUI = updateChibiUI; window.UI.updateDiscipleBadge = updateDiscipleBadge; window.UI.updateStats = updateStats; window.UI.updateAbilityUI = updateAbilityUI; window.UI.updateEnergyUI = updateEnergyUI; window.UI.flashAlert = flashAlert; window.UI.updatePrismaUI = updatePrismaUI; window.UI.updateItemCounts = updateItemCounts; window.UI.highlightTile = highlightTile;
+    document.addEventListener("DOMContentLoaded", () => { initAbilityIcons(); injectTutorialButton(); bindAbilityklClicks(); injectItemBar(); if (!localStorage.getItem(TUTORIAL_KEY)) setTimeout(launchTutorial, 1000); setTimeout(() => { updateEnergyUI(); updatePrismaUI(); updateItemCounts(); if(GS.board) renderBoard(); }, 50); });
   } else { window.UI = window.UI || {}; window.UI.updateEnergyUI = function(){}; window.UI.updateStats = function(){}; window.UI.renderBoard = function(){}; window.renderBoard = function(){}; return; }
 
   function highlightTile(r,c,a){const e=document.getElementById(`cell-${r}-${c}`);if(e){if(a)e.classList.add("danger-pulse");else e.classList.remove("danger-pulse")}}
@@ -91,7 +54,7 @@
               if(GS.isProcessing){ if(UI.flashAlert)UI.flashAlert("BUSY",500); return; }
               const stock = window.economy ? economy.getItemCount(it.id) : 0;
               if (stock > 0) { if(window.Items && window.Items[it.fn]) Items[it.fn](); } 
-              else { if(confirm(`Empty! Buy ${it.name}? Cost: ${it.cost} 💎`)) { if(window.economy && economy.spendPrisma(it.cost)) { economy.addItem(it.id, 1); updateItemCounts(); updatePrismaUI(); if(window.Items && window.Items[it.fn]) Items[it.fn](); } else { alert("Insufficient Prisma!"); } } }
+              else { if(confirm(`Empty! Buy ${it.name}? Cost: ${it.cost} 🪙`)) { if(window.economy && economy.spendPrisma(it.cost)) { economy.addItem(it.id, 1); updateItemCounts(); updatePrismaUI(); if(window.Items && window.Items[it.fn]) Items[it.fn](); } else { alert("Insufficient Prisma!"); } } }
           };
           b.appendChild(btn);
       });
