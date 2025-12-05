@@ -1,4 +1,4 @@
-/* levels.js — FINAL (BALANCED FOR MOVE COST) */
+/* levels.js — V6.1 (MID-GAME RELIEF) */
 (function () {
   const DISCIPLES = {
     WAR:    { id: "WAR",    name: "WAR",    attack: "drain"  }, 
@@ -25,34 +25,40 @@
       const zoneIndex = Math.floor((i - 1) / 10);
       const discipleType = ZONE_TYPES[zoneIndex % 4];
       
-      // HP SCALING: SOFT START, HARD RAMP
-      let hp = 3000; 
+      // HP SCALING
+      let hp = 4500;
       
       if (i <= 20) {
+          // Lvl 1-20: +750 per level (Hard early game kept intact)
           hp += (i - 1) * 750; 
       } else if (i <= 50) {
-          hp = 17250 + ((i - 20) * 1500);
+          // RELIEF VALVE: Reduced from 1500 to 1100
+          hp = 18750 + ((i - 20) * 1100);
       } else if (i <= 100) {
-          hp = 62250 + ((i - 50) * 3000);
+          hp = 51750 + ((i - 50) * 2000);
       } else {
-          hp = 212250 + ((i - 100) * 5000);
+          hp = 151750 + ((i - 100) * 3500);
       }
 
       const isBoss = (i % 10 === 0);
-      let moveLimit = 22; // Tight but fair
+      let moveLimit = 20; 
       let rate = 3;
 
       if (isBoss) {
-          // BOSS: 2.2x HP (Mathematical Limit)
+          // BOSS MULTIPLIER: 2.2x (Was 3.0x - Too Hard)
           hp = Math.floor(hp * 2.2); 
-          moveLimit = 30; // Extra moves for the boss fight
-          rate = 2;
+          moveLimit = 30; // 30 Moves for Bosses (Was 25 - Too Tight)
+          rate = 2; 
       }
 
+      if (i > 50 && !isBoss) rate = 2; 
+
+      const name = isBoss ? `BOSS: ${BOSS_NAMES[(i/10)-1]}` : `Sector ${i}`;
+      
       FINAL_LEVELS.push(L(
-          i, isBoss ? `BOSS: ${BOSS_NAMES[(i/10)-1]}` : `Sector ${i}`, 
-          "System Intrusion", discipleType, 
-          moveLimit, hp, rate
+          i, name, "System Intrusion", discipleType, 
+          moveLimit, 
+          hp, rate
       ));
   }
 
