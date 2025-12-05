@@ -1,4 +1,4 @@
-// state.js — FIXED CURRENCY KEYS TO MATCH ECONOMY
+/* state.js — V3.6 (LOOP PREVENTION FLAG) */
 (function () {
   const GameState = {
     currentLevelId: 1,
@@ -15,6 +15,10 @@
     vyraCharge: 0,
     ionaCharge: 0,
     isProcessing: false,
+    
+    // NEW: Prevents abilities from recharging themselves
+    isAbilityTurn: false, 
+    
     turnsTaken: 0,
     discipleAttackRate: 3,
   };
@@ -29,34 +33,16 @@
     if (n > cur) localStorage.setItem("levelUnlocked", String(n));
   }
 
-  // --- SYNCED WITH ECONOMY.JS ("nx_" prefix) ---
-  function getPrisma() {
-    const raw = localStorage.getItem("nx_prisma"); // Fixed key
-    return parseInt(raw, 10) || 0;
-  }
-
+  function getPrisma() { return parseInt(localStorage.getItem("nx_prisma"), 10) || 0; }
   function addPrisma(delta) {
-    // We defer to economy if it exists to handle UI updates cleanly
-    if (window.economy && window.economy.addPrisma) {
-        window.economy.addPrisma(delta);
-    } else {
-        const next = Math.max(0, getPrisma() + delta);
-        localStorage.setItem("nx_prisma", String(next)); // Fixed key
-    }
+    if (window.economy && window.economy.addPrisma) window.economy.addPrisma(delta);
+    else localStorage.setItem("nx_prisma", String(Math.max(0, getPrisma() + delta)));
   }
 
-  function getAurum() {
-    const raw = localStorage.getItem("nx_aurum"); // Fixed key
-    return parseInt(raw, 10) || 0;
-  }
-
+  function getAurum() { return parseInt(localStorage.getItem("nx_aurum"), 10) || 0; }
   function addAurum(delta) {
-    if (window.economy && window.economy.addAurum) {
-        window.economy.addAurum(delta);
-    } else {
-        const next = Math.max(0, getAurum() + delta);
-        localStorage.setItem("nx_aurum", String(next)); // Fixed key
-    }
+    if (window.economy && window.economy.addAurum) window.economy.addAurum(delta);
+    else localStorage.setItem("nx_aurum", String(Math.max(0, getAurum() + delta)));
   }
 
   function readLevelIdFromURL() {
@@ -70,15 +56,7 @@
   window.GameState = GameState;
   window.gameState = GameState;
 
-  window.StorageAPI = {
-    getLevelUnlocked,
-    setLevelUnlocked,
-    getPrisma,
-    addPrisma,
-    getAurum,
-    addAurum,
-  };
-
+  window.StorageAPI = { getLevelUnlocked, setLevelUnlocked, getPrisma, addPrisma, getAurum, addAurum };
   window.GRID_SIZE = GameState.GRID_SIZE;
   window.readLevelIdFromURL = readLevelIdFromURL;
 })();

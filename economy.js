@@ -1,4 +1,4 @@
-/* economy.js — V3.0 (REAL MONEY SIM + SUPPLY PASS) */
+/* economy.js — V3.6 (INFLATION CONTROL) */
 (function () {
   const LS = {
     energy: "nx_energy",
@@ -16,7 +16,12 @@
   const economy = {
     maxEnergy: 10, regenMinutes: 6, levelCost: 1,
     prismaToEnergyCost: 50, aurumToPrismaRate: 100,
-    costBomb: 30, costHourglass: 40, costAntidote: 20,  
+    
+    // INCREASED COSTS (V3.6)
+    costBomb: 50,      // Was 30
+    costHourglass: 60, // Was 40
+    costAntidote: 40,  // Was 20
+    
     adWatchReward: 3, adCooldownMinutes: 10,
     dailyLoginPrisma: 50, 
     LS_KEYS: LS,
@@ -39,7 +44,17 @@
     spendPrisma(n) { const cur = this.getPrisma(); if (cur < n) return false; localStorage.setItem(LS.prisma, String(cur - n)); return true; },
     spendAurum(n) { const cur = this.getAurum(); if (cur < n) return false; localStorage.setItem(LS.aurum, String(cur - n)); return true; },
     spendEnergyForLevel() { this.regenerateEnergy(); const e = this.getEnergy(); if (e < this.levelCost) return false; this.setEnergy(e - this.levelCost); return true; },
-    buyItem(type) { let cost = 0; if(type==='bomb') cost=this.costBomb; if(type==='hourglass') cost=this.costHourglass; if(type==='antidote') cost=this.costAntidote; if (this.spendPrisma(cost)) { this.addItem(type, 1); return true; } return false; },
+    
+    // UPDATED BUY LOGIC TO USE NEW COSTS
+    buyItem(type) { 
+        let cost = 0; 
+        if(type==='bomb') cost=this.costBomb; 
+        if(type==='hourglass') cost=this.costHourglass; 
+        if(type==='antidote') cost=this.costAntidote; 
+        if (this.spendPrisma(cost)) { this.addItem(type, 1); return true; } 
+        return false; 
+    },
+    
     buyEnergyWithPrisma() { if (this.getEnergy() >= this.maxEnergy) return false; if (this.spendPrisma(this.prismaToEnergyCost)) { this.addEnergy(1); return true; } return false; },
     exchangeAurumToPrisma() { if (this.spendAurum(1)) { this.addPrisma(this.aurumToPrismaRate); return true; } return false; },
     watchAdForEnergy() {

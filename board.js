@@ -1,4 +1,4 @@
-/* board.js — V3.4 (DYNAMIC COMBO SCALING) */
+/* board.js — V7.0 (CHARGE LOOP KILLER) */
 (function () {
   const GS = window.gameState || (window.gameState = {});
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -104,7 +104,7 @@
     let safeguard = 0;
     let comboStreak = 0;
 
-    const COSTS = window.ABILITY_COSTS || { aelia:20, nocta:25, vyra:30, iona:35 };
+    const COSTS = window.ABILITY_COSTS || { aelia:25, nocta:22, vyra:25, iona:30 };
 
     while (!stable && safeguard < 20) {
         if (GS.victoryTriggered) break;
@@ -152,23 +152,25 @@
                     chgMult = Artifacts.getChargeMult();
                 }
                 
-                // DYNAMIC COMBO SCALING
-                // Starts at 5% per step. Adds 0.05% per level. Capped at 15%.
+                const baseDmg = 75 * dmgMult; 
+                
                 let comboFactor = 0.05 + (GS.currentLevelId * 0.0005);
                 if (comboFactor > 0.15) comboFactor = 0.15;
 
-                const baseDmg = 50 * dmgMult; 
                 const multiplier = 1 + (comboStreak * comboFactor); 
                 const dmg = Math.floor((uniqueMatches / 3) * baseDmg * multiplier);
                 
                 window.Abilities.applyHeroDamage("board", dmg);
                 if (window.FX) FX.showDamage(dmg);
                 
-                const chgBonus = (uniqueMatches > 3 ? 2 : 1) * chgMult;
-                GS.aeliaCharge = Math.min(COSTS.aelia, GS.aeliaCharge + chgBonus);
-                GS.noctaCharge = Math.min(COSTS.nocta, GS.noctaCharge + (1 * chgMult));
-                GS.vyraCharge = Math.min(COSTS.vyra, GS.vyraCharge + (1 * chgMult));
-                GS.ionaCharge = Math.min(COSTS.iona, GS.ionaCharge + (1 * chgMult));
+                // CRITICAL FIX: DO NOT CHARGE IF THIS IS AN ABILITY TURN
+                if (!GS.isAbilityTurn) {
+                    const chgBonus = (uniqueMatches > 3 ? 2 : 1) * chgMult;
+                    GS.aeliaCharge = Math.min(COSTS.aelia, GS.aeliaCharge + chgBonus);
+                    GS.noctaCharge = Math.min(COSTS.nocta, GS.noctaCharge + (1 * chgMult));
+                    GS.vyraCharge = Math.min(COSTS.vyra, GS.vyraCharge + (1 * chgMult));
+                    GS.ionaCharge = Math.min(COSTS.iona, GS.ionaCharge + (1 * chgMult));
+                }
             }
 
             if (GS.victoryTriggered) break;

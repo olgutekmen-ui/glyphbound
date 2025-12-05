@@ -1,4 +1,4 @@
-/* engine.js — V3.1 (ICON FIX & QUEST HOOKS) */
+/* engine.js — V3.3 (AUSTERITY ECONOMY) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -68,7 +68,9 @@
         Quests.report('kill_boss', GS.currentLevelId); 
     }
 
-    const reward = 20 + (GS.movesLeft * 2);
+    // ECONOMY NERF: Base 10 (was 20). Bonus 1x (was 2x).
+    const reward = 10 + (GS.movesLeft * 1);
+    
     if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
     if (window.StorageAPI?.setLevelUnlocked) StorageAPI.setLevelUnlocked(GS.currentLevelId + 1);
 
@@ -77,7 +79,7 @@
     const btnRevive = document.getElementById("btn-revive");
     if(btnRevive) btnRevive.style.display = "none";
 
-    if (msgEl) { msgEl.textContent = `VICTORY! +${reward} Prisma`; msgEl.className = "victory-title"; }
+    if (msgEl) { msgEl.textContent = `VICTORY! +${reward} 🪙`; msgEl.className = "victory-title"; }
     if (btnNext) {
         const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === GS.currentLevelId + 1);
         if (nextLevelExists) {
@@ -120,7 +122,6 @@
       }
       const cost = 50;
       const benefit = defeatReason === 'time' ? "+15 SECONDS" : "+5 MOVES";
-      // FIXED ICON: 🪙 instead of 💎
       btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">🪙 ${cost} PRISMA</span>`;
       btn.style.display = "block";
       btn.onclick = () => attemptRevive(cost);
@@ -184,7 +185,6 @@
     GS.discipleAttackRate = lvl.attackRate || 3; 
     GS.GRID_SIZE = 9;
     
-    // Artifact Hooks
     let extraMoves = 0;
     let startCharge = 0;
     if (window.Artifacts) {

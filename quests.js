@@ -1,4 +1,4 @@
-/* quests.js — V2.4 (PREVIEW MODE & ICON FIX) */
+/* quests.js — V3.0 (NO SPAM + VISIBILITY) */
 (function() {
     const LS_KEY = "nx_quest_data_v1";
     
@@ -15,7 +15,7 @@
 
     const Quests = {
         data: null,
-        viewingDay: null, // Tracks which day the player is looking at
+        viewingDay: null,
 
         init() {
             this.load();
@@ -27,7 +27,7 @@
             if(raw) {
                 try { this.data = JSON.parse(raw); } catch(e) { this.reset(1); }
             } else { this.reset(1); }
-            this.viewingDay = this.data.day; // Default to current
+            this.viewingDay = this.data.day;
         },
 
         save() { localStorage.setItem(LS_KEY, JSON.stringify(this.data)); },
@@ -51,16 +51,28 @@
             this.viewingDay = this.data.day;
         },
 
+        // FIXED REPORTING LOGIC
         report(type, amount = 1) {
             if (this.data.claimed) return; 
+            
             const q = WEEKLY_CONFIG[this.data.day - 1];
             if (!q || q.type !== type) return;
             if (type === 'kill_boss') { if (amount % 10 !== 0) return; amount = 1; }
-            this.data.progress += amount;
+
+            const oldProgress = this.data.progress;
+            const newProgress = oldProgress + amount;
+            
+            this.data.progress = newProgress;
             this.save();
+
+            // LOGIC GATE: Only flash if we JUST crossed the finish line
             if (window.UI && UI.flashAlert) {
-                if (this.data.progress < q.target) UI.flashAlert(`QUEST: ${this.data.progress}/${q.target}`);
-                else UI.flashAlert(`QUEST COMPLETE! CLAIM REWARD!`);
+                if (oldProgress < q.target && newProgress >= q.target) {
+                    UI.flashAlert(`QUEST COMPLETE! CLAIM REWARD!`, 3000);
+                } else if (newProgress < q.target) {
+                    // Only show updates for non-trivial counts
+                    UI.flashAlert(`QUEST: ${newProgress}/${q.target}`);
+                }
             }
         },
 
@@ -76,16 +88,13 @@
                 if (q.rType.startsWith('item_')) { economy.addItem(q.rType.replace('item_', ''), q.reward); }
                 if(window.UI) { if(UI.updatePrismaUI) UI.updatePrismaUI(); if(UI.updateItemCounts) UI.updateItemCounts(); }
             }
-            // Use Text here because Alert cannot show images
             alert(`REWARD CLAIMED: +${q.reward} ${q.rType.toUpperCase()}`);
             this.renderModal(); 
             const badge = document.getElementById("quest-badge"); if(badge) badge.style.display = "none";
         },
 
         openLog() {
-            // Reset view to current day on open
             this.viewingDay = this.data.day;
-            
             let el = document.getElementById("quest-modal");
             if (!el) {
                 el = document.createElement("div"); el.id = "quest-modal";
@@ -103,8 +112,6 @@
 
         renderModal() {
             const el = document.getElementById("quest-modal"); if(!el) return;
-            
-            // Use viewingDay for display, but check actual day for status
             const viewQ = WEEKLY_CONFIG[this.viewingDay - 1];
             const currentDay = this.data.day;
             
@@ -112,14 +119,12 @@
             const isPast = this.viewingDay < currentDay;
             const isCurrent = this.viewingDay === currentDay;
 
-            // Logic for Buttons
             let btnState = "";
             if (isFuture) {
                 btnState = `<button disabled style="background:#0f172a; color:#64748b; border:1px solid #334155; padding:12px 40px; border-radius:8px; font-weight:bold;">LOCKED</button>`;
             } else if (isPast) {
                 btnState = `<button disabled style="background:#1e293b; color:#94a3b8; border:1px solid #334155; padding:12px 40px; border-radius:8px; font-weight:bold; letter-spacing:1px;">EXPIRED</button>`;
             } else {
-                // IT IS TODAY
                 const isDone = this.data.progress >= viewQ.target;
                 const isClaimed = this.data.claimed;
                 if (isClaimed) {
@@ -133,38 +138,25 @@
                 }
             }
 
-            // STRIP
             let stripHTML = `<div style="display:flex; gap:8px; margin-bottom:20px; justify-content:center; flex-wrap:wrap;">`;
             WEEKLY_CONFIG.forEach(wk => {
-                const isActiveInStrip = wk.day === this.viewingDay; // Selected
+                const isActiveInStrip = wk.day === this.viewingDay;
                 const isRealToday = wk.day === currentDay;
-                
                 let borderStyle = "2px solid #334155";
                 let imgFilter = "grayscale(1) brightness(0.5)";
-                
                 if (wk.day < currentDay) { borderStyle = "2px solid #38bdf8"; imgFilter = "grayscale(0.8) brightness(0.6)"; }
                 if (wk.day === currentDay) { borderStyle = "2px solid #facc15"; imgFilter = "none"; }
-                
-                // Highlight Selection
                 if (isActiveInStrip) { borderStyle = "2px solid #fff"; imgFilter = "brightness(1.2)"; }
-
-                stripHTML += `
-                    <div onclick="Quests.switchView(${wk.day})" style="border:${borderStyle}; border-radius:8px; overflow:hidden; padding:2px; background:#020617; cursor:pointer; transition:all 0.2s; transform:${isActiveInStrip?'scale(1.1)':'scale(1.0)'}">
-                        <img src="assets/quest${wk.day}.png" style="width:40px; height:40px; border-radius:6px; object-fit:cover; filter:${imgFilter};" onerror="this.style.backgroundColor='#333'">
-                    </div>`;
+                stripHTML += `<div onclick="Quests.switchView(${wk.day})" style="border:${borderStyle}; border-radius:8px; overflow:hidden; padding:2px; background:#020617; cursor:pointer; transition:all 0.2s; transform:${isActiveInStrip?'scale(1.1)':'scale(1.0)'}"><img src="assets/quest${wk.day}.png" style="width:40px; height:40px; border-radius:6px; object-fit:cover; filter:${imgFilter};" onerror="this.style.backgroundColor='#333'"></div>`;
             });
             stripHTML += `</div>`;
 
-            // REWARD ICON
             let rewardIcon = "";
             if (viewQ.rType === 'aurum') rewardIcon = `<img src="assets/aurum.jpg" class="currency-img" width="20" height="20" style="vertical-align:middle; border-radius:50%;">`;
             else if (viewQ.rType === 'prisma') rewardIcon = `🪙`;
-            else rewardIcon = `📦`; // Item
+            else rewardIcon = `📦`;
 
             const currentImg = `assets/quest${viewQ.day}.png`;
-            
-            // Progress Display (Hide if Future?)
-            // We show it, but it will be 0/X
             const progVal = isCurrent ? this.data.progress : (isPast ? viewQ.target : 0);
 
             el.innerHTML = `
