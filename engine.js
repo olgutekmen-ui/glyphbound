@@ -1,4 +1,4 @@
-/* engine.js — V3.0 (ARTIFACT START BONUSES) */
+/* engine.js — V3.1 (ICON FIX & QUEST HOOKS) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -120,7 +120,8 @@
       }
       const cost = 50;
       const benefit = defeatReason === 'time' ? "+15 SECONDS" : "+5 MOVES";
-      btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">💎 ${cost} PRISMA</span>`;
+      // FIXED ICON: 🪙 instead of 💎
+      btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">🪙 ${cost} PRISMA</span>`;
       btn.style.display = "block";
       btn.onclick = () => attemptRevive(cost);
   }
@@ -162,7 +163,7 @@
 
   async function requestShuffle() {
       if (GS.isProcessing || GS.victoryTriggered) return;
-      if (GS.movesLeft < 1) { if(window.UI && UI.flashAlert) UI.flashAlert("NOT ENOUGH MOVES"); return; }
+      if (GS.movesLeft <= 1) { if(window.UI && UI.flashAlert) UI.flashAlert("NOT ENOUGH MOVES"); return; }
       if (window.confirm("Shuffle Board? Cost: 1 Move")) {
           GS.isProcessing = true; GS.movesLeft--;
           if (window.UI) UI.updateStats();
@@ -183,7 +184,7 @@
     GS.discipleAttackRate = lvl.attackRate || 3; 
     GS.GRID_SIZE = 9;
     
-    // --- ARTIFACT HOOK (Start Bonuses) ---
+    // Artifact Hooks
     let extraMoves = 0;
     let startCharge = 0;
     if (window.Artifacts) {
@@ -192,7 +193,6 @@
     }
     GS.movesLeft = (lvl.moves || 25) + extraMoves;
     GS.aeliaCharge=startCharge; GS.noctaCharge=startCharge; GS.vyraCharge=startCharge; GS.ionaCharge=startCharge;
-    // -------------------------------------
 
     GS.score = 0;
     GS.turnsTaken = 0;

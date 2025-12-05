@@ -1,4 +1,4 @@
-/* board.js — V3.3 (COMBO KILL SWITCH) */
+/* board.js — V3.4 (DYNAMIC COMBO SCALING) */
 (function () {
   const GS = window.gameState || (window.gameState = {});
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
@@ -107,7 +107,6 @@
     const COSTS = window.ABILITY_COSTS || { aelia:20, nocta:25, vyra:30, iona:35 };
 
     while (!stable && safeguard < 20) {
-        // KILL SWITCH 1: If game ended (Time/Moves/Kill), stop processing immediately
         if (GS.victoryTriggered) break;
 
         applyGravityAndRefill();
@@ -126,7 +125,6 @@
         } else {
             stable = false;
             
-            // KILL SWITCH 2: Double check before playing FX
             if (GS.victoryTriggered) break;
 
             try { 
@@ -147,7 +145,6 @@
 
             const uniqueMatches = matchedSet.size; 
             if (window.Abilities && window.Abilities.applyHeroDamage) {
-                // ARTIFACT HOOKS
                 let dmgMult = 1.0;
                 let chgMult = 1.0;
                 if (window.Artifacts) {
@@ -155,14 +152,18 @@
                     chgMult = Artifacts.getChargeMult();
                 }
                 
+                // DYNAMIC COMBO SCALING
+                // Starts at 5% per step. Adds 0.05% per level. Capped at 15%.
+                let comboFactor = 0.05 + (GS.currentLevelId * 0.0005);
+                if (comboFactor > 0.15) comboFactor = 0.15;
+
                 const baseDmg = 50 * dmgMult; 
-                const multiplier = 1 + (comboStreak * 0.1); 
+                const multiplier = 1 + (comboStreak * comboFactor); 
                 const dmg = Math.floor((uniqueMatches / 3) * baseDmg * multiplier);
                 
                 window.Abilities.applyHeroDamage("board", dmg);
                 if (window.FX) FX.showDamage(dmg);
                 
-                // Charge Heroes
                 const chgBonus = (uniqueMatches > 3 ? 2 : 1) * chgMult;
                 GS.aeliaCharge = Math.min(COSTS.aelia, GS.aeliaCharge + chgBonus);
                 GS.noctaCharge = Math.min(COSTS.nocta, GS.noctaCharge + (1 * chgMult));
@@ -170,7 +171,6 @@
                 GS.ionaCharge = Math.min(COSTS.iona, GS.ionaCharge + (1 * chgMult));
             }
 
-            // KILL SWITCH 3: If damage killed the boss, stop the cascade visual updates
             if (GS.victoryTriggered) break;
 
             matchedSet.forEach(key => {
@@ -195,7 +195,6 @@
         }
     }
     
-    // Only spread hazards if game is still active
     if (!GS.victoryTriggered) {
         spreadHazards();
         if (window.UI && UI.renderBoard) UI.renderBoard();
