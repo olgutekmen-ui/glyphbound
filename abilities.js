@@ -1,22 +1,17 @@
-/* abilities.js — V3.2 (ARTIFACT COST REDUCTION WIRED) */
+/* abilities.js — V3.3 (DYNAMIC LEVEL SCALING + ARTIFACT SYNERGY) */
 (function () {
   const GS = window.GameState || window.gameState;
   const UI = window.UI;
   const delay = (ms) => new Promise(res => setTimeout(res, ms)); 
 
-  // --- ARTIFACT INTEGRATION ---
+  // --- ARTIFACT INTEGRATION (COSTS) ---
   let reduction = 0;
-  // Check if Artifacts system is loaded and ready
   if (window.Artifacts && typeof Artifacts.getCostReduction === 'function') {
       reduction = Artifacts.getCostReduction();
-      // Console log for debugging
-      if(reduction > 0) console.log("NEURAL NETWORK ACTIVE: -" + (reduction*100) + "% Ability Cost");
   }
 
-  // BASE COSTS (Doubled from original)
   const BASE_COSTS = { aelia: 20, nocta: 25, vyra: 30, iona: 35 };
 
-  // APPLY REDUCTION (Floor to integer)
   const COSTS = {
       aelia: Math.floor(BASE_COSTS.aelia * (1 - reduction)),
       nocta: Math.floor(BASE_COSTS.nocta * (1 - reduction)),
@@ -24,8 +19,23 @@
       iona:  Math.floor(BASE_COSTS.iona * (1 - reduction))
   };
 
-  // EXPOSE TO WINDOW FOR UI/BOARD
   window.ABILITY_COSTS = COSTS;
+
+  // --- NEW: DAMAGE SCALING CALCULATOR ---
+  function getScaledDamage(base, growth) {
+      const lvl = GS.currentLevelId || 1;
+      
+      // 1. Calculate Level-Based Damage
+      let dmg = base + (lvl * growth);
+      
+      // 2. Apply Artifact Multipliers (Synergy)
+      let mult = 1.0;
+      if (window.Artifacts && typeof Artifacts.getDamageMult === 'function') {
+          mult = Artifacts.getDamageMult();
+      }
+      
+      return Math.floor(dmg * mult);
+  }
 
   function updateStatsSync() {
       const hpBar = document.getElementById("disciple-hp-bar");
@@ -47,7 +57,8 @@
     updateStatsSync();
 
     if (window.FX) {
-        if (actual > 500) { FX.shake(2); FX.showDamage(actual, true); }
+        // Shake screen harder for big hits (scaled to level)
+        if (actual > (GS.discipleMaxHP * 0.1)) { FX.shake(2); FX.showDamage(actual, true); }
         else { FX.showDamage(actual); }
     }
     if (window.AudioSys && sourceHero !== "board") AudioSys.play('cast');
@@ -87,13 +98,18 @@
       }
   }
 
+  // --- HERO LOGIC UPDATED WITH SCALING ---
+
   async function activateAelia() {
     if (GS.isProcessing || GS.aeliaCharge < COSTS.aelia) return;
     if(window.Quests) Quests.report('use_ulti'); 
     resetCharge("aelia");
     GS.isProcessing = true;
     try {
-      const isDead = applyHeroDamage("aelia", 2500); 
+      // SCALING: Starts at ~900 (Lvl 1). Reaches ~17,000 (Lvl 200).
+      // Base: 800, Growth: 80 per level.
+      const dmg = getScaledDamage(800, 80);
+      const isDead = applyHeroDamage("aelia", dmg); 
       if (isDead) return;
       const row = Math.floor(Math.random() * GS.GRID_SIZE);
       const toClear = [];
@@ -108,7 +124,9 @@
     resetCharge("nocta");
     GS.isProcessing = true;
     try {
-      applyHeroDamage("nocta", 1500); 
+      // SCALING: Starts at ~550. Reaches ~10,500.
+      const dmg = getScaledDamage(500, 50);
+      applyHeroDamage("nocta", dmg); 
       const N = GS.GRID_SIZE; const candidates = [];
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { if (GS.board[r][c]) candidates.push({ r, c }); }
       for (let i = candidates.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [candidates[i], candidates[j]] = [candidates[j], candidates[i]]; }
@@ -123,7 +141,9 @@
     resetCharge("iona");
     GS.isProcessing = true;
     try {
-      const isDead = applyHeroDamage("iona", 1000);
+      // SCALING: Utility focused. Starts ~390.
+      const dmg = getScaledDamage(350, 40);
+      const isDead = applyHeroDamage("iona", dmg);
       if (isDead) return;
       const types = [];
       for (let r=0; r<GS.GRID_SIZE; r++) for (let c=0; c<GS.GRID_SIZE; c++) { const cell = GS.board[r][c]; if (window.isGlyph(cell) && !types.includes(cell.type)) types.push(cell.type); }
@@ -141,7 +161,9 @@
     resetCharge("vyra");
     GS.isProcessing = true;
     try {
-      const isDead = applyHeroDamage("vyra", 1000); 
+      // SCALING: Utility focused. Starts ~390.
+      const dmg = getScaledDamage(350, 40);
+      const isDead = applyHeroDamage("vyra", dmg); 
       if (isDead) return;
       const max = GS.GRID_SIZE - 2;
       const r0 = 1 + Math.floor(Math.random() * max);
