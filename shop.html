@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Glyphbound: Depot</title>
-  <link rel="stylesheet" href="style.css?v=3.0" />
+  <link rel="stylesheet" href="style.css?v=3.5" />
   <style>
     /* LOCAL SHOP STYLES */
     #shop-screen { padding: 1rem; max-width: 600px; margin: 0 auto; }
@@ -27,14 +27,20 @@
         transition: transform 0.2s, border-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     .shop-card:hover { transform: translateY(-5px); }
+    
     .shop-card.combat { border-top: 3px solid #ef4444; }
     .shop-card.combat:hover { border-color: #f87171; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
-    .shop-card.resource { border-top: 3px solid #38bdf8; }
-    .shop-card.resource:hover { border-color: #7dd3fc; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
     
-    /* MYTHIC CARD STYLE */
-    .shop-card.mythic { border-top: 3px solid #a855f7; background: linear-gradient(145deg, #2e1065, #020617); }
-    .shop-card.mythic:hover { border-color: #d8b4fe; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+    /* DATA PACKS (Cyan/Green) */
+    .shop-card.data { border-top: 3px solid #0ea5e9; background: linear-gradient(145deg, #0f172a, #082f49); }
+    .shop-card.data:hover { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+    
+    .shop-card.pass { border-top: 3px solid #22c55e; }
+    .shop-card.pass:hover { border-color: #4ade80; box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
+
+    /* MYTHIC (Gold) */
+    .shop-card.mythic { border-top: 3px solid #fbbf24; background: linear-gradient(145deg, #422006, #020617); border-bottom: 3px solid #fbbf24; }
+    .shop-card.mythic:hover { border-color: #fcd34d; box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); }
 
     .item-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
     .item-title { font-weight: 800; color: #fff; font-size: 0.9rem; margin-bottom: 4px; letter-spacing: 1px;}
@@ -47,8 +53,9 @@
         width: 100%; transition: all 0.2s;
     }
     .buy-btn:hover { background: #38bdf8; color: #000; }
-    .buy-btn.mythic-btn { border-color: #a855f7; color: #d8b4fe; }
-    .buy-btn.mythic-btn:hover { background: #a855f7; color: #fff; }
+    
+    .buy-btn.cash { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+    .buy-btn.cash:hover { background: #fff; color: #000; }
     
     .section-label { color: #94a3b8; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
   </style>
@@ -69,62 +76,79 @@
       <div class="currency" style="border-color:#f472b6; color:#f472b6">🪙 <span id="aurum-amt">--</span></div>
   </div>
 
-  <div class="section-label">Combat Consumables</div>
+  <div class="section-label">Field Supplies</div>
   <div class="shop-grid">
     <div class="shop-card combat">
       <div class="item-icon">💣</div>
       <div class="item-title">BOMB</div>
-      <div class="item-desc">Destroy 5 random tiles. Clears hazards.</div>
+      <div class="item-desc">Destroy 5 tiles.</div>
       <div class="item-stock">OWNED: <span id="stock-bomb">0</span></div>
       <button class="buy-btn" onclick="doAction('buyBomb')">30 💎</button>
     </div>
     <div class="shop-card combat">
       <div class="item-icon">⏳</div>
       <div class="item-title">HOURGLASS</div>
-      <div class="item-desc">Extends mission time. +5 Moves.</div>
+      <div class="item-desc">+5 Moves / +15s.</div>
       <div class="item-stock">OWNED: <span id="stock-hourglass">0</span></div>
       <button class="buy-btn" onclick="doAction('buyHourglass')">40 💎</button>
     </div>
     <div class="shop-card combat">
       <div class="item-icon">🧪</div>
       <div class="item-title">ANTIDOTE</div>
-      <div class="item-desc">Neutralizes all Poison on the board.</div>
+      <div class="item-desc">Cure Poison.</div>
       <div class="item-stock">OWNED: <span id="stock-antidote">0</span></div>
       <button class="buy-btn" onclick="doAction('buyAntidote')">20 💎</button>
     </div>
   </div>
 
-  <div class="section-label">Logistics & Premium</div>
+  <div class="section-label">Data Packs (Store)</div>
+  <div class="shop-grid">
+    <div class="shop-card data">
+      <div class="item-icon">💾</div>
+      <div class="item-title">1 MB CACHE</div>
+      <div class="item-desc">Starter Pack.<br>2 Aurum Immediately.</div>
+      <button class="buy-btn cash" onclick="doAction('buyCache')">$1.99</button>
+    </div>
+
+    <div class="shop-card pass">
+      <div class="item-icon">🎫</div>
+      <div class="item-title" style="color:#4ade80;">10 MB PASS</div>
+      <div class="item-desc">5 Aurum Now +<br>2 Daily (30 Days).</div>
+      <button class="buy-btn cash" onclick="doAction('buyPass')">$4.99</button>
+    </div>
+
+    <div class="shop-card data">
+      <div class="item-icon">💿</div>
+      <div class="item-title" style="color:#38bdf8;">100 MB DATA</div>
+      <div class="item-desc">Pro Pack.<br>12 Aurum (20% Bonus).</div>
+      <button class="buy-btn cash" onclick="doAction('buyData')">$9.99</button>
+    </div>
+
+    <div class="shop-card mythic">
+      <div class="item-icon">👑</div>
+      <div class="item-title" style="color:#fbbf24;">1 TB DUMP</div>
+      <div class="item-desc">Mythic Pack.<br>75 Aurum (MEGA VALUE).</div>
+      <button class="buy-btn cash" style="border-color:#fbbf24; color:#fbbf24;" onclick="doAction('buyDump')">$49.99</button>
+    </div>
+  </div>
+
+  <div class="section-label">Logistics</div>
   <div class="shop-grid">
     <div class="shop-card resource">
       <div class="item-icon">⚡</div>
       <div class="item-title">RECHARGE</div>
-      <div class="item-desc">Restores +1 Energy immediately.</div>
+      <div class="item-desc">Full Energy.</div>
       <button class="buy-btn" onclick="doAction('buyEnergy')">50 💎</button>
     </div>
     <div class="shop-card resource">
-      <div class="item-icon">💎</div>
-      <div class="item-title">EXCHANGE</div>
-      <div class="item-desc">Convert Aurum to Prisma currency.</div>
-      <button class="buy-btn" onclick="doAction('convertAurum')">1 🪙</button>
-    </div>
-    
-    <div class="shop-card mythic">
-      <div class="item-icon">👑</div>
-      <div class="item-title" style="color:#d8b4fe;">MYTHIC PACK</div>
-      <div class="item-desc">1000 💎, Max ⚡, +3 All Items.</div>
-      <button class="buy-btn mythic-btn" onclick="doAction('buyMythic')">5 🪙</button>
-    </div>
-    
-    <div class="shop-card resource">
       <div class="item-icon">📺</div>
       <div class="item-title">SIGNAL</div>
-      <div class="item-desc">Watch ad stream for +3 Energy.</div>
+      <div class="item-desc">Watch ad (+3 Energy).</div>
       <button class="buy-btn" onclick="doAction('watchAd')">FREE</button>
     </div>
   </div>
 
-  <script src="economy.js?v=3.0"></script>
+  <script src="economy.js?v=3.5"></script>
   <script>
     function updateUI() {
       economy.regenerateEnergy();
@@ -142,19 +166,23 @@
         if (action === 'buyBomb') result = economy.buyItem('bomb');
         else if (action === 'buyHourglass') result = economy.buyItem('hourglass');
         else if (action === 'buyAntidote') result = economy.buyItem('antidote');
+        
+        // REAL MONEY
+        else if (action === 'buyCache') result = economy.buyPack('cache');
+        else if (action === 'buyPass') result = economy.buyPack('pass');
+        else if (action === 'buyData') result = economy.buyPack('data');
+        else if (action === 'buyDump') result = economy.buyPack('dump');
+
         else if (action === 'watchAd') {
             alert("Watching Ad Stream... [||||||||||]");
             result = economy.watchAdForEnergy();
             if(result) alert("Thank you! +3 Energy received.");
         } 
         else if (action === 'buyEnergy') result = economy.buyEnergyWithPrisma();
-        else if (action === 'convertAurum') result = economy.exchangeAurumToPrisma();
-        else if (action === 'buyMythic') {
-            result = economy.buyMythicPack();
-            if(result) alert("MYTHIC PACK ACQUIRED! You are unstoppable.");
-        }
 
-        if(!result && action.startsWith('buy')) alert("Insufficient Funds!");
+        if(!result && action.startsWith('buy') && !action.includes('Pack') && !action.includes('buyCache') && !action.includes('buyPass') && !action.includes('buyData') && !action.includes('buyDump')) {
+            alert("Insufficient Funds!");
+        }
         updateUI();
     }
     updateUI();

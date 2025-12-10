@@ -1,4 +1,4 @@
-/* economy.js — V1.4 (MYTHIC PACK ADDED) */
+/* economy.js — V1.5 (DATA PACKS & MYTHIC 75) */
 (function () {
   const LS = {
     energy: "nx_energy",
@@ -8,7 +8,9 @@
     lastLogin: "nx_last_login_date",
     itemBomb: "nx_item_bomb",
     itemHourglass: "nx_item_hourglass",
-    itemAntidote: "nx_item_antidote"
+    itemAntidote: "nx_item_antidote",
+    premiumPass: "nx_premium_pass_active", 
+    passDaysLeft: "nx_pass_days_left"
   };
 
   const economy = {
@@ -17,20 +19,13 @@
     levelCost: 1,
     
     // COSTS
-    prismaToEnergyCost: 50,
-    aurumToPrismaRate: 100,
-    
-    // ITEM COSTS
     costBomb: 30,      
     costHourglass: 40, 
     costAntidote: 20,  
     
-    // PREMIUM
-    costMythic: 5, // Aurum
-
+    // REWARDS
     adWatchReward: 3,
-    dailyLoginAurum: 3,
-
+    
     LS_KEYS: LS,
 
     // --- GETTERS ---
@@ -68,14 +63,12 @@
         return false;
     },
 
-    // --- TRANSACTIONS ---
     addPrisma(n) { localStorage.setItem(LS.prisma, String(this.getPrisma() + n)); },
     addAurum(n) { localStorage.setItem(LS.aurum, String(this.getAurum() + n)); },
 
     addEnergy(n) {
       const e = this.getEnergy();
-      const newVal = Math.min(this.maxEnergy, e + n);
-      this.setEnergy(newVal);
+      this.setEnergy(Math.min(this.maxEnergy, e + n));
     },
 
     spendPrisma(n) {
@@ -100,13 +93,11 @@
       return true;
     },
 
-    // --- SHOP ACTIONS ---
     buyItem(type) {
         let cost = 0;
         if(type === 'bomb') cost = this.costBomb;
         if(type === 'hourglass') cost = this.costHourglass;
         if(type === 'antidote') cost = this.costAntidote;
-
         if (this.spendPrisma(cost)) {
             this.addItem(type, 1);
             return true;
@@ -114,37 +105,28 @@
         return false;
     },
 
-    buyEnergyWithPrisma() {
-      if (this.getEnergy() >= this.maxEnergy) return false;
-      if (this.spendPrisma(this.prismaToEnergyCost)) {
-        this.addEnergy(1);
-        return true;
-      }
-      return false;
-    },
-
-    watchAdForEnergy() {
-      if (this.getEnergy() >= this.maxEnergy) return false;
-      this.addEnergy(this.adWatchReward);
-      return true;
-    },
-
-    exchangeAurumToPrisma() {
-      if (this.spendAurum(1)) {
-        this.addPrisma(this.aurumToPrismaRate);
-        return true;
-      }
-      return false;
-    },
-
-    // THE MYTHIC PACK
-    buyMythicPack() {
-        if (this.spendAurum(this.costMythic)) {
-            this.addPrisma(1000);
-            this.addEnergy(10); // Full tank
-            this.addItem('bomb', 3);
-            this.addItem('hourglass', 3);
-            this.addItem('antidote', 3);
+    // --- REAL MONEY SIMULATION ---
+    buyPack(id) {
+        if (id === 'cache') {
+            this.addAurum(2);
+            alert("1 MB CACHE ACQUIRED! (+2 Aurum)");
+            return true;
+        }
+        if (id === 'pass') {
+            this.addAurum(5);
+            localStorage.setItem(LS.premiumPass, "true");
+            localStorage.setItem(LS.passDaysLeft, "30");
+            alert("10 MB PASS ACTIVE! (+5 Aurum Now, +2 Daily)");
+            return true;
+        }
+        if (id === 'data') {
+            this.addAurum(12);
+            alert("100 MB PRO PACK ACQUIRED! (+12 Aurum)");
+            return true;
+        }
+        if (id === 'dump') {
+            this.addAurum(75); // 75 AURUM CONFIRMED
+            alert("1 TB MYTHIC DUMP! (+75 Aurum) UNSTOPPABLE.");
             return true;
         }
         return false;
@@ -178,20 +160,33 @@
 
       if (diff >= msPerEnergy) {
         const gained = Math.floor(diff / msPerEnergy);
-        const newTotal = Math.min(this.maxEnergy, cur + gained);
-        this.setEnergy(newTotal);
-        const remainder = diff % msPerEnergy;
-        localStorage.setItem(LS.lastEnergyAt, String(now - remainder));
+        this.setEnergy(Math.min(this.maxEnergy, cur + gained));
+        localStorage.setItem(LS.lastEnergyAt, String(now - (diff % msPerEnergy)));
       }
     },
 
     checkDailyLogin() {
       const lastDate = localStorage.getItem(LS.lastLogin);
       const today = new Date().toDateString();
+      
       if (lastDate !== today) {
-        this.addAurum(this.dailyLoginAurum);
+        let reward = 1;
+        let msg = "DAILY LOGIN: +1 Aurum";
+        
+        if (localStorage.getItem(LS.premiumPass) === "true") {
+            let days = parseInt(localStorage.getItem(LS.passDaysLeft) || "0", 10);
+            if (days > 0) {
+                reward += 2;
+                msg = "DAILY LOGIN + PASS: +3 Aurum!";
+                localStorage.setItem(LS.passDaysLeft, String(days - 1));
+            } else {
+                localStorage.removeItem(LS.premiumPass);
+                alert("10 MB PASS EXPIRED.");
+            }
+        }
+        this.addAurum(reward);
         localStorage.setItem(LS.lastLogin, today);
-        setTimeout(() => { if(window.alert) alert(`DAILY LOGIN: +${this.dailyLoginAurum} Aurum!`); }, 500);
+        setTimeout(() => { if(window.alert) alert(msg); }, 500);
       }
     }
   };

@@ -1,4 +1,4 @@
-/* engine.js — V3.4 (CRASH PROOF MENUS) */
+/* engine.js — FINAL GOLD MASTER (V1.12) */
 (function () {
   const GS = window.GameState || window.gameState || (window.gameState = {});
   const delay = window.delay || (ms => new Promise(res => setTimeout(res, ms)));
@@ -12,10 +12,7 @@
           if (GS.isProcessing || GS.victoryTriggered) return;
           GS.timeLeft--;
           if (window.UI && UI.updateStats) UI.updateStats();
-          if (GS.timeLeft <= 0) {
-              clearInterval(timerInterval);
-              handleDefeat('time');
-          }
+          if (GS.timeLeft <= 0) { clearInterval(timerInterval); handleDefeat('time'); }
       }, 1000);
   }
 
@@ -61,55 +58,26 @@
     GS.victoryTriggered = true;
     GS.isProcessing = true; 
     if(timerInterval) clearInterval(timerInterval);
-    
-    // SAFETY BLOCK: Audio/Quests
-    try {
-        if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
-        if(window.Quests) {
-            Quests.report('win_level'); 
-            Quests.report('kill_boss', GS.currentLevelId); 
-        }
-    } catch(e) { console.warn("Victory Effect Error:", e); }
-
-    const reward = 10 + (GS.movesLeft * 1);
-    
-    // SAFETY BLOCK: Economy
-    try {
-        if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
-        if (window.StorageAPI?.setLevelUnlocked) StorageAPI.setLevelUnlocked(GS.currentLevelId + 1);
-    } catch(e) { console.warn("Economy Save Error:", e); }
-
-    // CRASH PROOF UI RENDER
-    try {
-        const msgEl = document.getElementById("end-message");
-        const btnNext = document.getElementById("btn-next-level");
-        const btnRevive = document.getElementById("btn-revive");
-        
-        if(btnRevive) btnRevive.style.display = "none";
-        if (msgEl) { msgEl.textContent = `VICTORY! +${reward} 🪙`; msgEl.className = "victory-title"; }
-        
-        if (btnNext) {
-            const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === GS.currentLevelId + 1);
-            if (nextLevelExists) {
-                btnNext.style.display = "block";
-                btnNext.onclick = () => { if (window.economy && window.economy.spendEnergyForLevel()) window.location.href = `game.html?level=${GS.currentLevelId+1}`; else if(confirm("Not enough Energy!")) window.location.href = "shop.html"; };
-            } else { 
-                btnNext.style.display = "none"; 
-                if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!"; 
-            }
-        }
-        
-        const hId = ({GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"})[GS.disciple?.id] || "aelia";
-        const imgEl = document.getElementById("end-chibi");
-        if (imgEl) {
-            imgEl.src = `assets/${hId}_wink.png`;
-            imgEl.onerror = function() { this.style.display = 'none'; }; // Hide if missing
-        }
-    } catch(e) { console.error("Victory UI Error:", e); }
-
-    // FORCE DISPLAY
-    const overlay = document.getElementById("end-overlay");
-    if(overlay) overlay.style.display = "flex";
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('win'); }
+    const reward = 20 + (GS.movesLeft * 2);
+    if (window.economy && window.economy.addPrisma) window.economy.addPrisma(reward);
+    if (window.StorageAPI?.setLevelUnlocked) StorageAPI.setLevelUnlocked(GS.currentLevelId + 1);
+    const msgEl = document.getElementById("end-message");
+    const btnNext = document.getElementById("btn-next-level");
+    const btnRevive = document.getElementById("btn-revive");
+    if(btnRevive) btnRevive.style.display = "none";
+    if (msgEl) { msgEl.textContent = `VICTORY! +${reward} Prisma`; msgEl.className = "victory-title"; }
+    if (btnNext) {
+        const nextLevelExists = window.LEVELS && window.LEVELS.some(l => l.id === GS.currentLevelId + 1);
+        if (nextLevelExists) {
+            btnNext.style.display = "block";
+            btnNext.onclick = () => { if (window.economy && window.economy.spendEnergyForLevel()) window.location.href = `game.html?level=${GS.currentLevelId+1}`; else if(confirm("Not enough Energy!")) window.location.href = "shop.html"; };
+        } else { btnNext.style.display = "none"; if (msgEl) msgEl.textContent = "CAMPAIGN COMPLETE!"; }
+    }
+    const hId = ({GREED:"aelia",PLAGUE:"nocta",WAR:"vyra",DECEIT:"iona"})[GS.disciple?.id] || "aelia";
+    const imgEl = document.getElementById("end-chibi");
+    if (imgEl) imgEl.src = `assets/${hId}_wink.png`;
+    document.getElementById("end-overlay").style.display = "flex";
   }
 
   function handleDefeat(reason) {
@@ -118,50 +86,29 @@
     GS.isProcessing = true;
     defeatReason = reason || 'moves'; 
     if(timerInterval) clearInterval(timerInterval);
-
-    // SAFETY BLOCK: Audio
-    try {
-        if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
-    } catch(e) { console.warn("Audio Error:", e); }
-
-    // CRASH PROOF UI RENDER
-    try {
-        const msgEl = document.getElementById("end-message");
-        if (msgEl) { msgEl.textContent = defeatReason === 'time' ? "OUT OF TIME" : "OUT OF MOVES"; msgEl.className = "defeat-title"; }
-        
-        const nextBtn = document.getElementById("btn-next-level");
-        if(nextBtn) nextBtn.style.display = "none";
-        
-        const imgEl = document.getElementById("end-chibi");
-        if (imgEl && GS.disciple) { 
-            imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`; 
-            imgEl.onerror = function() { this.src = "assets/tile_greed.png"; }; 
-        }
-        
-        injectReviveButton();
-    } catch(e) { console.error("Defeat UI Error:", e); }
-
-    // FORCE DISPLAY
-    const overlay = document.getElementById("end-overlay");
-    if(overlay) overlay.style.display = "flex";
+    if(window.AudioSys) { AudioSys.stopBGM(); AudioSys.play('lose'); }
+    const msgEl = document.getElementById("end-message");
+    if (msgEl) { msgEl.textContent = defeatReason === 'time' ? "OUT OF TIME" : "OUT OF MOVES"; msgEl.className = "defeat-title"; }
+    document.getElementById("btn-next-level").style.display = "none";
+    const imgEl = document.getElementById("end-chibi");
+    if (imgEl && GS.disciple) { imgEl.src = `assets/disciple_${GS.disciple.id.toLowerCase()}.jpg`; imgEl.onerror = function() { this.src = "assets/tile_greed.png"; }; }
+    injectReviveButton();
+    document.getElementById("end-overlay").style.display = "flex";
   }
 
   function injectReviveButton() {
       let btn = document.getElementById("btn-revive");
       const box = document.getElementById("end-box");
       const playAgain = document.getElementById("btn-play-again");
-      
-      if (!box || !playAgain) return; // Safety check
-
       if (!btn) {
           btn = document.createElement("button");
           btn.id = "btn-revive";
           btn.style.cssText = "width:100%; padding:12px; margin-bottom:8px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #d946ef); color:#fff; border:1px solid #c084fc; cursor:pointer; font-weight:900; letter-spacing:1px; text-transform:uppercase; box-shadow:0 0 15px rgba(217, 70, 239, 0.4);";
-          box.insertBefore(btn, playAgain);
+          if(box && playAgain) box.insertBefore(btn, playAgain);
       }
       const cost = 50;
       const benefit = defeatReason === 'time' ? "+15 SECONDS" : "+5 MOVES";
-      btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">🪙 ${cost} PRISMA</span>`;
+      btn.innerHTML = `CONTINUE <span style="font-size:0.8em; opacity:0.9;">(${benefit})</span><br><span style="font-size:0.8em">💎 ${cost} PRISMA</span>`;
       btn.style.display = "block";
       btn.onclick = () => attemptRevive(cost);
   }
@@ -223,18 +170,10 @@
     GS.discipleHP = GS.discipleMaxHP;
     GS.discipleAttackRate = lvl.attackRate || 3; 
     GS.GRID_SIZE = 9;
-    
-    let extraMoves = 0;
-    let startCharge = 0;
-    if (window.Artifacts) {
-        extraMoves = Artifacts.getMoveBonus();
-        startCharge = Artifacts.getStartCharge();
-    }
-    GS.movesLeft = (lvl.moves || 25) + extraMoves;
-    GS.aeliaCharge=startCharge; GS.noctaCharge=startCharge; GS.vyraCharge=startCharge; GS.ionaCharge=startCharge;
-
+    GS.movesLeft = lvl.moves || 25;
     GS.score = 0;
     GS.turnsTaken = 0;
+    GS.aeliaCharge=0; GS.noctaCharge=0; GS.vyraCharge=0; GS.ionaCharge=0;
     GS.isProcessing = false;
     GS.victoryTriggered = false;
     GS.timeLeft = 0; 
