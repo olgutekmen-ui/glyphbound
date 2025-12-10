@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Protocol: Mastery</title>
+  <link rel="stylesheet" href="style.css?v=3.5" />
+  <link rel="stylesheet" href="mastery.css?v=1.0" />
+</head>
+<body id="mastery-screen">
+
+  <div id="mastery-header">
+    <div class="header-top">
+      <h2 style="margin:0; color:#fff; letter-spacing:2px; text-shadow:0 0 10px #d8b4fe;">PROTOCOL: MASTERY</h2>
+      <button class="nav-btn" onclick="window.location.href='map.html'">EXIT</button>
+    </div>
+    <div style="font-size:0.8rem; color:#94a3b8; text-align:center;">
+      SYNC RATE: <span id="sync-rate" style="color:#fff; font-weight:bold;">0%</span>
+    </div>
+  </div>
+
+  <div id="mastery-hub">
+    <div class="sealer-card" onclick="startTrial('jinri')">
+      <img src="assets/SealerJinri.png" class="sealer-img" />
+      <div class="sealer-name" style="color:#d8b4fe">JINRI</div>
+      <div class="sealer-desc">TEST OF LOGIC</div>
+    </div>
+    <div class="sealer-card locked">
+      <img src="assets/SealerJohwa.png" class="sealer-img" style="filter:grayscale(1);" />
+      <div class="sealer-name">JOHWA</div>
+      <div class="sealer-desc">LOCKED</div>
+    </div>
+    <div class="sealer-card locked">
+      <img src="assets/SealerBari.png" class="sealer-img" style="filter:grayscale(1);" />
+      <div class="sealer-name">BARI</div>
+      <div class="sealer-desc">LOCKED</div>
+    </div>
+    <div class="sealer-card locked">
+      <img src="assets/SealerMireuk.png" class="sealer-img" style="filter:grayscale(1);" />
+      <div class="sealer-name">MIREUK</div>
+      <div class="sealer-desc">LOCKED</div>
+    </div>
+  </div>
+
+  <div id="trial-jinri" class="trial-container" style="display:none;">
+    <div class="opponent-area">
+        <img src="assets/SealerJinri.png" class="opponent-portrait" />
+        <div class="dialogue-box" id="jinri-msg">"Observe the pattern. Replicate it."</div>
+    </div>
+    
+    <div id="memory-grid">
+        </div>
+
+    <div class="trial-status">ROUND: <span id="round-num">1</span>/5</div>
+  </div>
+
+  <div id="mastery-overlay" style="display:none;">
+      <div id="mastery-box">
+          <h2 id="m-title">TRIAL COMPLETE</h2>
+          <div id="m-reward"></div>
+          <button class="nav-btn" onclick="window.location.reload()">CONTINUE</button>
+      </div>
+  </div>
+
+  <script src="economy.js?v=3.0"></script>
+  <script src="mastery.js?v=1.0"></script>
+</body>
+</html>
